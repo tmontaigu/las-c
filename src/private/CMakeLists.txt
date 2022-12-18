@@ -1,0 +1,10 @@
+target_sources(
+        las_c
+        PRIVATE
+        dest.h
+        header.h
+        macro.h
+        point.h
+        source.h
+        utils.h
+)

@@ -1,0 +1,10 @@
+target_sources(
+        las_c
+        PUBLIC
+        las/error.h
+        las/header.h
+        las/point.h
+        las/reader.h
+        las/vlr.h
+        las/writer.h
+)
