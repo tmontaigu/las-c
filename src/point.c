@@ -543,6 +543,134 @@ void las_raw_point_copy_from_point(las_raw_point_t *self,
     }
 }
 
+void las_raw_point_copy_from_raw(
+    las_raw_point_t *restrict self,
+    const las_raw_point_t *restrict source)
+{
+    LAS_DEBUG_ASSERT_NOT_NULL(self);
+    LAS_DEBUG_ASSERT_NOT_NULL(source);
+
+    if (self->point_format_id <= 5 && source->point_format_id <= 5)
+    {
+        // Simple case where we can simply copy data
+        las_raw_point_10_t *d = &self->point10;
+        const las_raw_point_10_t *s = &source->point10;
+        LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
+
+        *d = *s;
+
+        if (s->num_extra_bytes)
+        {
+            LAS_DEBUG_ASSERT_NOT_NULL(d->extra_bytes);
+            LAS_DEBUG_ASSERT_NOT_NULL(s->extra_bytes);
+            memcpy(d->extra_bytes, s->extra_bytes, sizeof(uint8_t) * s->num_extra_bytes);
+            uint8_t *eb = d->extra_bytes;
+            d->extra_bytes = eb;
+        }
+    } else if (self->point_format_id >= 6 && source->point_format_id >= 6)
+    {
+        // Simple case where we can simply copy data
+        las_raw_point_14_t *d = &self->point14;
+        const las_raw_point_14_t *s = &source->point14;
+        LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
+
+        *d = *s;
+
+        if (s->num_extra_bytes)
+        {
+            LAS_DEBUG_ASSERT_NOT_NULL(d->extra_bytes);
+            LAS_DEBUG_ASSERT_NOT_NULL(s->extra_bytes);
+            memcpy(d->extra_bytes, s->extra_bytes, sizeof(uint8_t) * s->num_extra_bytes);
+            uint8_t *eb = d->extra_bytes;
+            d->extra_bytes = eb;
+        }
+    } else if (self->point_format_id <= 5 && source->point_format_id >= 6)
+    {
+        // Here the underlying data is not totally the same, so we manually copy
+        las_raw_point_10_t *d = &self->point10;
+        const las_raw_point_14_t *s = &source->point14;
+        LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
+
+        d->x = s->x;
+        d->y = s->y;
+        d->z = s->z;
+
+        d->intensity = s->intensity;
+        d->return_number = s->return_number & 0b0000111;
+        d->number_of_returns = s->number_of_returns & 0b0000111;
+
+        d->scan_direction_flag = s->scan_direction_flag;
+        d->edge_of_flight_line = s->edge_of_flight_line;
+
+        d->classification = s->classification & 0b00011111;
+        d->synthetic = s->synthetic;
+        d->key_point = s->key_point;
+        d->withheld = s->withheld;
+
+        d->scan_angle_rank = (uint8_t)s->scan_angle;
+        d->user_data = s->user_data;
+        d->point_source_id = s->point_source_id;
+
+        d->gps_time = s->gps_time;
+
+        d->red = s->red;
+        d->green = s->green;
+        d->blue = s->blue;
+
+        d->wave_packet = s->wave_packet;
+
+        if (s->num_extra_bytes)
+        {
+            LAS_DEBUG_ASSERT_NOT_NULL(d->extra_bytes);
+            LAS_DEBUG_ASSERT_NOT_NULL(s->extra_bytes);
+            memcpy(d->extra_bytes, s->extra_bytes, s->num_extra_bytes);
+        }
+    } else if (self->point_format_id >= 6 && source->point_format_id <= 5) {
+        // Here the underlying data is not totally the same, so we manually copy
+        las_raw_point_14_t *d = &self->point14;
+        const las_raw_point_10_t *s = &source->point10;
+        LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
+
+        d->x = s->x;
+        d->y = s->y;
+        d->z = s->z;
+
+        d->intensity = s->intensity;
+
+        d->return_number = s->return_number;
+        d->number_of_returns = s->number_of_returns;
+
+        d->synthetic = s->synthetic;
+        d->key_point = s->key_point;
+        d->withheld = s->withheld;
+        d->overlap = 0;
+        d->scanner_channel = 0;
+        d->scan_direction_flag = s->scan_direction_flag;
+        d->edge_of_flight_line = s->edge_of_flight_line;
+
+        d->classification = s->classification;
+        d->user_data = s->user_data;
+        d->scan_angle = (uint16_t)s->scan_angle_rank;
+        d->point_source_id = s->point_source_id;
+
+        d->gps_time = s->gps_time;
+
+        d->red = s->red;
+        d->green = s->green;
+        d->blue = s->blue;
+
+        d->wave_packet = s->wave_packet;
+
+        if (s->num_extra_bytes)
+        {
+            LAS_DEBUG_ASSERT_NOT_NULL(d->extra_bytes);
+            LAS_DEBUG_ASSERT_NOT_NULL(s->extra_bytes);
+            memcpy(d->extra_bytes, s->extra_bytes, s->num_extra_bytes);
+        }
+    }
+
+}
+
 void las_point_copy_from_raw(las_point_t *self,
                              const las_raw_point_t *raw_point,
                              const las_scaling_t scaling)

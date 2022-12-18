@@ -64,17 +64,22 @@ static int las_version_is_compatible_with_point_format(las_version_t version,
     LAS_DEBUG_ASSERT(version.minor <= 4);
     LAS_DEBUG_ASSERT(point_format_id <= 10);
 
-    if (point_format_id >= 4 && version.minor <= 2)
+    if (point_format_id <= 3 && version.minor >= 0)
     {
-        return 0;
+        return 1;
     }
 
-    if (point_format_id >= 6 && version.minor <= 3)
+    if (point_format_id <= 5 && version.minor >= 3)
     {
-        return 0;
+        return 1;
     }
 
-    return 1;
+    if (point_format_id <= 10 && version.minor >= 4)
+    {
+        return 1;
+    }
+
+    return 0;
 }
 
 las_error_t las_vlr_read_into(las_source_t *source, las_vlr_t *vlr)
@@ -130,7 +135,7 @@ las_error_t las_vlr_write_to(const las_vlr_t *self, las_dest_t *dest)
     error.kind = LAS_ERROR_OK;
     uint8_t header_bytes[LAS_VLR_HEADER_SIZE];
 
-    buffer_writer_t wrt = { &header_bytes[0] };
+    buffer_writer_t wrt = {&header_bytes[0]};
 
     const uint16_t reserved = 0;
     write_intog(&wrt, &reserved);
@@ -311,7 +316,7 @@ las_error_t las_header_validate_for_writing(const las_header_t *self)
         return las_err;
     }
 
-    if (!las_version_is_compatible_with_point_format(self->version, self->point_format.id))
+    if (las_version_is_compatible_with_point_format(self->version, self->point_format.id) == 0)
     {
         las_err.kind = LAS_ERROR_INCOMPATIBLE_VERSION_AND_FORMAT;
         las_err.incompatible.version = self->version;
@@ -359,8 +364,7 @@ las_error_t las_header_read_from(las_source_t *source, las_header_t *header)
     if (strncmp(signature, LAS_SIGNATURE, LAS_SIGNATURE_SIZE) != 0)
     {
         las_err.kind = LAS_ERROR_INVALID_SIGNATURE;
-        strcpy(las_err.signature,
-                signature);
+        strcpy(las_err.signature, signature);
         return las_err;
     }
 
@@ -540,21 +544,21 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     write_into(wtr, &self->generating_software[0], LAS_GENERATING_SOFTWARE_SIZE);
     write_intog(wtr, &self->file_creation_day_of_year);
     write_intog(wtr, &self->file_creation_year);
-    uint16_t header_size = las_header_size_for_version(self->version) + self->num_extra_header_bytes;
-    write_intog(wtr, (const uint16_t*)&header_size);
+    uint16_t header_size =
+        las_header_size_for_version(self->version) + self->num_extra_header_bytes;
+    write_intog(wtr, (const uint16_t *)&header_size);
 
     uint16_t total_vlr_byte_size = 0;
     for (uint32_t i = 0; i < self->number_of_vlrs; ++i)
     {
         total_vlr_byte_size += las_vlr_size(&self->vlrs[i]);
     }
-    uint32_t offset_to_point_data = (uint32_t)(header_size + total_vlr_byte_size);
+    const uint32_t offset_to_point_data = (uint32_t)(header_size + total_vlr_byte_size);
 
-     write_intog(wtr, &self->offset_to_point_data);
+    write_intog(wtr, &offset_to_point_data);
     write_intog(wtr, &self->number_of_vlrs);
     write_intog(wtr, &self->point_format.id);
-    const uint16_t point_size =
-        las_point_standard_size(self->point_format.id);
+    const uint16_t point_size = las_point_standard_size(self->point_format.id);
     write_intog(wtr, &point_size);
     write_intog(wtr, (const uint32_t *)&legacy_point_count);
 
@@ -583,24 +587,22 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     write_intog(wtr, &self->maxs.z);
     write_intog(wtr, &self->mins.z);
 
-    if (self->version.major == 1 && self->version.minor == 3)
+    if (self->version.major == 1 && self->version.minor >= 3)
     {
         write_intog(wtr, &self->start_of_waveform_datapacket);
     }
 
-    if (self->version.major == 1 && self->version.minor == 4)
+    if (self->version.major == 1 && self->version.minor >= 4)
     {
         write_intog(wtr, &self->start_of_evlrs);
         write_intog(wtr, &self->number_of_evlrs);
         write_intog(wtr, &self->point_count);
-        for (uint32_t i = 0; i < LAS_LEGACY_NUMBER_OF_POINTS_BY_RETURN_SIZE; ++i)
+        for (uint32_t i = 0; i < LAS_NUMBER_OF_POINTS_BY_RETURN_SIZE; ++i)
         {
             write_intog(wtr, &self->number_of_points_by_return[i]);
         }
     }
 
-    // We use this header size, as the size contained in self
-    // accounts for possible extra header bytes
     LAS_DEBUG_ASSERT((wtr->ptr - &header_bytes[0]) == header_size);
     uint64_t n = las_dest_write(dest, &header_bytes[0], header_size);
     if (self->extra_header_bytes != NULL && self->num_extra_header_bytes > 0)
@@ -612,7 +614,6 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     {
         las_err = las_dest_err(dest);
     }
-
 
     if (self->vlrs != NULL && self->number_of_vlrs != 0)
     {

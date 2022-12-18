@@ -65,10 +65,11 @@ void las_error_fprintf(const las_error_t *self, FILE *stream)
         break;
     case LAS_ERROR_INCOMPATIBLE_VERSION_AND_FORMAT:
         fprintf(stream,
-                "point format `%d` is incompatible with version `%d.%d` i`\n",
+                "point format `%d` is incompatible with version `%d.%d`\n",
+                (int)self->incompatible.point_format_id,
                 (int)self->incompatible.version.major,
-                (int)self->incompatible.version.minor,
-                (int)self->incompatible.point_format_id);
+                (int)self->incompatible.version.minor
+                );
         break;
     case LAS_ERROR_INCOMPATIBLE_POINT_FORMAT:
         fprintf(stream, "The point format of does not match");

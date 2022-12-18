@@ -139,6 +139,10 @@ struct las_raw_point_t
 
 typedef struct las_raw_point_t las_raw_point_t;
 
+void las_raw_point_copy_from_raw(
+    las_raw_point_t *restrict self,
+    const las_raw_point_t *restrict source);
+
 int las_raw_point_eq(const las_raw_point_t *lhs, const las_raw_point_t *rhs);
 
 /// Prepares the point to match the description from the header

@@ -243,7 +243,6 @@ TEST(ReadWriteBuffers, RawPoint10Roundrip)
     std::vector<uint8_t> buffer;
     buffer.resize(las_point_format_point_size(header.point_format));
 
-
     las_raw_point_10_t output_point;
     output_point.extra_bytes = static_cast<uint8_t *>(malloc(sizeof(uint8_t) * rp.num_extra_bytes));
     ASSERT_NE(output_point.extra_bytes, nullptr);

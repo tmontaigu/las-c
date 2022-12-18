@@ -12,3 +12,6 @@ target_link_libraries(check_decompression PRIVATE las_c)
 
 add_executable(lasinfo lasinfo.c)
 target_link_libraries(lasinfo PRIVATE las_c)
+
+add_executable(lasconvert lasconvert.c)
+target_link_libraries(lasconvert PRIVATE las_c)
