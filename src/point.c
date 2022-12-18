@@ -304,7 +304,7 @@ void las_raw_point_10_to_buffer(const las_raw_point_10_t *point10,
         write_into(wtr, point10->extra_bytes, point10->num_extra_bytes);
     }
 
-    // TODO updt LAS_DEBUG_ASSERT((wtr->ptr - buffer) == (uint64_t)point_size);
+    LAS_DEBUG_ASSERT((wtr->ptr - buffer) == (uint64_t)las_point_format_point_size(point_format));
 }
 
 void las_raw_point_14_from_buffer(const uint8_t *buffer,
@@ -374,7 +374,7 @@ void las_raw_point_14_from_buffer(const uint8_t *buffer,
         read_into(&rdr, point14->extra_bytes, point14->num_extra_bytes);
     }
 
-    // TODO update LAS_DEBUG_ASSERT((rdr.ptr - buffer) == (uint64_t)point_size);
+    LAS_DEBUG_ASSERT((rdr.ptr - buffer) == (uint64_t)las_point_format_point_size(point_format));
 }
 
 void las_raw_point_14_to_buffer(const las_raw_point_14_t *point14,
@@ -447,7 +447,7 @@ void las_raw_point_14_to_buffer(const las_raw_point_14_t *point14,
         write_into(wtr, point14->extra_bytes, point14->num_extra_bytes);
     }
 
-    // TODO updt LAS_DEBUG_ASSERT((wtr->ptr - buffer) == (uint64_t)point_size);
+    LAS_DEBUG_ASSERT((wtr->ptr - buffer) == (uint64_t)las_point_format_point_size(point_format));
 }
 
 void las_raw_point_copy_from_point(las_raw_point_t *self,

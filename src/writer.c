@@ -81,7 +81,6 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
     {
         should_compress = 1;
     }
-    // TODO remove any existing laszip vlr
     if (should_compress)
     {
 #ifdef WITH_LAZRS
