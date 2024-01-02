@@ -44,7 +44,7 @@ static void init_raw_point_10(las_raw_point_10_t *rp) {
     rp->wave_packet.zt = 11.3f;
 
     rp->num_extra_bytes = 4;
-    rp->extra_bytes = (uint8_t *)std::malloc(rp->num_extra_bytes * sizeof(uint8_t));
+    rp->extra_bytes = static_cast<uint8_t *>(std::malloc(rp->num_extra_bytes * sizeof(uint8_t)));
     if (rp->extra_bytes != nullptr)
     {
         rp->extra_bytes[0] = 1;

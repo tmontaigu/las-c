@@ -5,18 +5,6 @@
 #include "private/header.h"
 #include "private/macro.h"
 
-int las_error_is_ok(const las_error_t *self)
-{
-    LAS_DEBUG_ASSERT(self != NULL);
-    return self->kind == LAS_ERROR_OK;
-}
-
-int las_error_is_failure(const las_error_t *self)
-{
-    LAS_DEBUG_ASSERT(self != NULL);
-    return self->kind != LAS_ERROR_OK;
-}
-
 void las_error_fprintf(const las_error_t *self, FILE *stream)
 {
     LAS_DEBUG_ASSERT(self != NULL);

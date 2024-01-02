@@ -7,6 +7,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 #define BASE_POINT10_SIZE 20
 // remove the gps for `las_point_standard_size` to work
@@ -71,7 +72,7 @@ uint16_t las_point_standard_size(uint8_t format_id)
     return size;
 }
 
-int las_wave_packet_eq(const las_wave_packet_t *lhs, const las_wave_packet_t *rhs)
+bool las_wave_packet_eq(const las_wave_packet_t *lhs, const las_wave_packet_t *rhs)
 {
     return lhs->descriptor_index == rhs->descriptor_index &&
            lhs->byte_offset_to_data == rhs->byte_offset_to_data &&
@@ -474,7 +475,7 @@ void las_raw_point_copy_from_point(las_raw_point_t *self,
         rp->scan_direction_flag = point->scan_direction_flag;
         rp->edge_of_flight_line = point->edge_of_flight_line;
 
-        rp->classification = point->classification & 0b00011111;
+        rp->classification = point->classification & UINT8_C(0b00011111);
         rp->synthetic = point->synthetic;
         rp->key_point = point->key_point;
         rp->withheld = point->withheld;
@@ -544,16 +545,16 @@ void las_raw_point_copy_from_point(las_raw_point_t *self,
 }
 
 void las_raw_point_copy_from_raw(
-    las_raw_point_t *restrict self,
+    las_raw_point_t *restrict dest,
     const las_raw_point_t *restrict source)
 {
-    LAS_DEBUG_ASSERT_NOT_NULL(self);
+    LAS_DEBUG_ASSERT_NOT_NULL(dest);
     LAS_DEBUG_ASSERT_NOT_NULL(source);
 
-    if (self->point_format_id <= 5 && source->point_format_id <= 5)
+    if (dest->point_format_id <= 5 && source->point_format_id <= 5)
     {
         // Simple case where we can simply copy data
-        las_raw_point_10_t *d = &self->point10;
+        las_raw_point_10_t *d = &dest->point10;
         const las_raw_point_10_t *s = &source->point10;
         LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
 
@@ -567,10 +568,10 @@ void las_raw_point_copy_from_raw(
             uint8_t *eb = d->extra_bytes;
             d->extra_bytes = eb;
         }
-    } else if (self->point_format_id >= 6 && source->point_format_id >= 6)
+    } else if (dest->point_format_id >= 6 && source->point_format_id >= 6)
     {
         // Simple case where we can simply copy data
-        las_raw_point_14_t *d = &self->point14;
+        las_raw_point_14_t *d = &dest->point14;
         const las_raw_point_14_t *s = &source->point14;
         LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
 
@@ -584,10 +585,10 @@ void las_raw_point_copy_from_raw(
             uint8_t *eb = d->extra_bytes;
             d->extra_bytes = eb;
         }
-    } else if (self->point_format_id <= 5 && source->point_format_id >= 6)
+    } else if (dest->point_format_id <= 5 && source->point_format_id >= 6)
     {
         // Here the underlying data is not totally the same, so we manually copy
-        las_raw_point_10_t *d = &self->point10;
+        las_raw_point_10_t *d = &dest->point10;
         const las_raw_point_14_t *s = &source->point14;
         LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
 
@@ -596,13 +597,13 @@ void las_raw_point_copy_from_raw(
         d->z = s->z;
 
         d->intensity = s->intensity;
-        d->return_number = s->return_number & 0b0000111;
+        d->return_number = s->return_number & (uint8_t) 0b0000111;
         d->number_of_returns = s->number_of_returns & 0b0000111;
 
         d->scan_direction_flag = s->scan_direction_flag;
         d->edge_of_flight_line = s->edge_of_flight_line;
 
-        d->classification = s->classification & 0b00011111;
+        d->classification = s->classification & (uint8_t) 0b00011111;
         d->synthetic = s->synthetic;
         d->key_point = s->key_point;
         d->withheld = s->withheld;
@@ -625,9 +626,9 @@ void las_raw_point_copy_from_raw(
             LAS_DEBUG_ASSERT_NOT_NULL(s->extra_bytes);
             memcpy(d->extra_bytes, s->extra_bytes, s->num_extra_bytes);
         }
-    } else if (self->point_format_id >= 6 && source->point_format_id <= 5) {
+    } else if (dest->point_format_id >= 6 && source->point_format_id <= 5) {
         // Here the underlying data is not totally the same, so we manually copy
-        las_raw_point_14_t *d = &self->point14;
+        las_raw_point_14_t *d = &dest->point14;
         const las_raw_point_10_t *s = &source->point10;
         LAS_DEBUG_ASSERT(d->num_extra_bytes == s->num_extra_bytes);
 

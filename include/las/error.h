@@ -1,6 +1,10 @@
 #ifndef LAS_C_ERROR_H
 #define LAS_C_ERROR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -73,10 +77,20 @@ struct las_error_t
 
 typedef struct las_error_t las_error_t;
 
-int las_error_is_ok(const las_error_t *self);
+static int las_error_is_ok(const las_error_t *self)
+{
+    return self->kind == LAS_ERROR_OK;
+}
 
-int las_error_is_failure(const las_error_t *self);
+static int las_error_is_failure(const las_error_t *self)
+{
+    return self->kind != LAS_ERROR_OK;
+}
 
 void las_error_fprintf(const las_error_t *self, FILE *stream);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LAS_C_ERROR_H

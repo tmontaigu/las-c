@@ -55,16 +55,18 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
     }
     memset(writer, 0, sizeof(las_writer_t));
 
-    uint16_t point_size = las_point_format_point_size(header->point_format);
+    const uint16_t point_size = las_point_format_point_size(header->point_format);
     point_buffer = malloc(sizeof(uint8_t) * point_size);
     if (point_buffer == NULL)
     {
+        las_err.kind = LAS_ERROR_MEMORY;
         goto out;
     }
 
     dest = malloc(sizeof(las_dest_t));
     if (dest == NULL)
     {
+        las_err.kind = LAS_ERROR_MEMORY;
         goto out;
     }
     memset(dest, 0, sizeof(las_dest_t));
@@ -169,7 +171,7 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
     }
 
 out:
-    if (las_error_is_failure(&las_err))
+    if (las_error_is_failure(&las_err) || writer == NULL)
     {
         las_header_delete(header);
         if (point_buffer != NULL)
@@ -247,8 +249,8 @@ las_error_t las_writer_write_raw_point(las_writer_t *self, const las_raw_point_t
         }
     }
 #else
-    uint64_t n = las_dest_write(self->dest, self->point_buffer, self->header->point_size);
-    if (n < self->header->point_size)
+    uint64_t n = las_dest_write(self->dest, self->point_buffer, self->point_size);
+    if (n < self->point_size)
     {
         las_err = las_dest_err(self->dest);
     }

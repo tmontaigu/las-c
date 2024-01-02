@@ -3,13 +3,17 @@ project(las_c)
 
 set(CMAKE_C_STANDARD 17)
 
-#if (MSVC)
-#    add_compile_options(/fsanitize=address /0d)
-#    add_link_options(/fsanitize=address)
-#else()
-#    add_compile_options(-fsanitize=address)
-#    add_link_options(-fsanitize=address)
-#endif()
+if (MSVC)
+    add_compile_options(/fsanitize=address /0d)
+    add_link_options(/fsanitize=address)
+else()
+    add_compile_options(
+        #-fsanitize=address
+        -pedantic
+        -Wconversion
+    )
+    #add_link_options(-fsanitize=address)
+endif()
 
 
 option(WITH_DEBUG_ASSERTIONS "Enable debug assertions" ON)
@@ -34,7 +38,7 @@ if (DEFINED CMAKE_C_BYTE_ORDER AND CMAKE_C_BYTE_ORDER)
         message(FATAL_ERROR "Only little endian is supported")
     endif()
 else()
-    message(FATAL_ERROR "Failed to get endianess")
+    message(FATAL_ERROR "Failed to get endianness")
 endif()
 
 if (WITH_LAZRS)

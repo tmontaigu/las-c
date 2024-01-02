@@ -44,7 +44,7 @@ uint64_t las_file_dest_flush(las_file_dest_t *self)
     LAS_DEBUG_ASSERT(self != NULL);
     LAS_DEBUG_ASSERT(self->file != NULL);
 
-    return fflush(self->file);
+    return fflush(self->file) != 0;
 }
 
 int las_file_dest_close(las_file_dest_t *self)

@@ -1,8 +1,10 @@
 #include <las/las.h>
 
+#include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 
 const char *point_format_arg_str = "--point-format";
 const char *version_arg_str = "--version";
@@ -16,7 +18,7 @@ typedef struct
     las_version_t target_version;
 } argument_t;
 
-argument_t parse_arguments(int argc, char *argv[])
+argument_t parse_arguments(const int argc, char *argv[])
 {
     argument_t args = {
         .input_file = NULL,
@@ -71,7 +73,7 @@ argument_t parse_arguments(int argc, char *argv[])
             }
 
             char *end;
-            unsigned long major = strtoul(version_str, &end, 10);
+            const unsigned long major = strtoul(version_str, &end, 10);
             if ((major == 0 || major == ULONG_MAX) && errno != 0)
             {
                 fprintf(stderr, "Failed to convert %s to a version\n", version_str);
@@ -85,7 +87,7 @@ argument_t parse_arguments(int argc, char *argv[])
                 exit(1);
             }
 
-            unsigned long minor = strtoul(dot_pos + 1, &end, 10);
+            const unsigned long minor = strtoul(dot_pos + 1, &end, 10);
             if ((minor == 0 || minor == ULONG_MAX) && errno != 0)
             {
                 fprintf(stderr, "Failed to convert %s to a version\n", version_str);

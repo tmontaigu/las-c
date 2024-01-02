@@ -39,8 +39,8 @@ int main(int argc, const char *argv[])
 
     uint64_t point_count = header->point_count;
     printf("Point count:  %" PRIu64 "\n", point_count);
-    printf("Point format: %" PRIu8 "\n", header->point_format_id);
-    printf("Point size:   %" PRIu16 "\n", header->point_size);
+    printf("Point format: %" PRIu8 "\n", header->point_format.id);
+    //printf("Point size:   %" PRIu16 "\n", header->point_size);
 
     if (point_count == 0)
     {
@@ -48,7 +48,7 @@ int main(int argc, const char *argv[])
         goto main_exit;
     }
 
-    las_raw_point_prepare(&point, header);
+    las_raw_point_prepare(&point, header->point_format);
 
     double x_min = DBL_MAX;
     double y_min = DBL_MAX;
@@ -66,7 +66,7 @@ int main(int argc, const char *argv[])
 
         double x, y;
 
-        if (header->point_format_id <= 5)
+        if (header->point_format.id <= 5)
         {
             x = point.point10.x;
             y = point.point10.y;

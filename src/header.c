@@ -506,8 +506,9 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     LAS_DEBUG_ASSERT_NOT_NULL(self);
     LAS_DEBUG_ASSERT_NOT_NULL(dest);
 
-    las_error_t las_err;
-    las_err.kind = LAS_ERROR_OK;
+    las_error_t las_err = {
+        .kind = LAS_ERROR_OK,
+    };
 
     uint32_t legacy_point_count;
 

@@ -35,13 +35,13 @@ static inline void read_into(buffer_reader_t *self, void *dst, uint64_t count)
         read_into(self, dst, sizeof(type));                                                        \
     }
 
-define_read_into(int32_t);
-define_read_into(uint8_t);
-define_read_into(uint16_t);
-define_read_into(uint32_t);
-define_read_into(uint64_t);
-define_read_into(float);
-define_read_into(double);
+define_read_into(int32_t)
+define_read_into(uint8_t)
+define_read_into(uint16_t)
+define_read_into(uint32_t)
+define_read_into(uint64_t)
+define_read_into(float)
+define_read_into(double)
 
 /// Definition of a generic read_into.
 ///
@@ -93,13 +93,13 @@ static inline void write_into(buffer_writer_t *self, const void *src, uint64_t c
         write_into(self, src, sizeof(type));                                                       \
     }
 
-define_write_into(int32_t);
-define_write_into(uint8_t);
-define_write_into(uint16_t);
-define_write_into(uint32_t);
-define_write_into(uint64_t);
-define_write_into(float);
-define_write_into(double);
+define_write_into(int32_t)
+define_write_into(uint8_t)
+define_write_into(uint16_t)
+define_write_into(uint32_t)
+define_write_into(uint64_t)
+define_write_into(float)
+define_write_into(double)
 
 /// Definition of a generic write_into.
 ///

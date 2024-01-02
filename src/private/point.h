@@ -16,7 +16,7 @@ void las_wave_packet_to_buffer(const las_wave_packet_t *wave_packet, uint8_t *bu
 
 uint16_t las_point_standard_size(uint8_t format_id);
 
-inline uint16_t las_point_format_point_size(const las_point_format_t self)
+static inline uint16_t las_point_format_point_size(const las_point_format_t self)
 {
     return las_point_standard_size(self.id) + self.num_extra_bytes;
 }
@@ -24,7 +24,7 @@ inline uint16_t las_point_format_point_size(const las_point_format_t self)
 /// Populates members of the `point10` by reading the `buffer`
 ///
 /// \param buffer Input buffer, its size __must__ be >= header->point_size
-/// \param header The header, to know which fields needs to be populated
+/// \param point_format The point format, to know which fields needs to be populated
 /// \param point10 Output point that will be populated
 void las_raw_point_10_from_buffer(const uint8_t *buffer,
                                   las_point_format_t point_format,
@@ -33,7 +33,7 @@ void las_raw_point_10_from_buffer(const uint8_t *buffer,
 /// Writes the members values of the `point10` to the `buffer`
 ///
 /// \param point10 The point to write
-/// \param header The header to known the scales and offsets
+/// \param point_format The point format, to know which fields needs to be populated
 /// \param buffer Output buffer, its size __must__ be >= header->point_size
 void las_raw_point_10_to_buffer(const las_raw_point_10_t *point10,
                                 las_point_format_t point_format,
@@ -42,7 +42,7 @@ void las_raw_point_10_to_buffer(const las_raw_point_10_t *point10,
 /// Populates members of the `point14` by reading the `buffer`
 ///
 /// \param buffer Input buffer, its size __must__ be >= header->point_size
-/// \param header The header, to know which fields needs to be populated
+/// \param point_format The point format, to know which fields needs to be populated
 /// \param point14 Output point that will be populated
 void las_raw_point_14_from_buffer(const uint8_t *buffer,
                                   las_point_format_t point_format,
@@ -51,7 +51,7 @@ void las_raw_point_14_from_buffer(const uint8_t *buffer,
 /// Writes the members values of the `point14` to the `buffer`
 ///
 /// \param point14 The point to write
-/// \param header The header to known the scales and offsets
+/// \param point_format The point format, to know which fields needs to be populated
 /// \param buffer Output buffer, its size __must__ be >= header->point_size
 void las_raw_point_14_to_buffer(const las_raw_point_14_t *point14,
                                 las_point_format_t point_format,

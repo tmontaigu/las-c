@@ -1,13 +1,20 @@
 #ifndef LAS_C_POINT_H
 #define LAS_C_POINT_H
 
+#ifdef __cplusplus
+#define restrict __restrict__
+extern "C" {
+#endif
+
 #include <las/header.h>
+
 #include <stdint.h>
+#include <stdbool.h>
 
 /// Wave-packet information
 ///
 /// For point formats 4, 5, 9, 10
-struct las_wave_packet_t
+typedef struct
 {
     uint8_t descriptor_index;
     uint64_t byte_offset_to_data;
@@ -16,17 +23,15 @@ struct las_wave_packet_t
     float xt;
     float yt;
     float zt;
-};
+} las_wave_packet_t;
 
-typedef struct las_wave_packet_t las_wave_packet_t;
+bool las_wave_packet_eq(const las_wave_packet_t *lhs, const las_wave_packet_t *rhs);
 
-int las_wave_packet_eq(const las_wave_packet_t *lhs, const las_wave_packet_t *rhs);
-
-/// Raw representation of point 1.
+/// Raw representation of point '1.0'.
 ///
 /// This struct covers members for point format [0, 5]
 /// which were introduced in LAS 1.0 and 1.3
-struct las_raw_point_10_t
+typedef struct las_raw_point_10_t
 {
     int32_t x;
     int32_t y;
@@ -61,9 +66,7 @@ struct las_raw_point_10_t
     // all fmt (num can be 0)
     uint16_t num_extra_bytes;
     uint8_t *extra_bytes;
-};
-
-typedef struct las_raw_point_10_t las_raw_point_10_t;
+} las_raw_point_10_t ;
 
 /// Cleans the point data members
 ///
@@ -74,7 +77,7 @@ void las_raw_point_10_deinit(las_raw_point_10_t *point);
 ///
 /// This struct covers members for point format [6, 10]
 /// which were introduced in LAS 1.4
-struct las_raw_point_14_t
+typedef struct las_raw_point_14_t
 {
     int32_t x;
     int32_t y;
@@ -113,9 +116,7 @@ struct las_raw_point_14_t
     // all fmt (num can be 0)
     uint16_t num_extra_bytes;
     uint8_t *extra_bytes;
-};
-
-typedef struct las_raw_point_14_t las_raw_point_14_t;
+} las_raw_point_14_t;
 
 /// Cleans the point data members
 ///
@@ -123,7 +124,7 @@ typedef struct las_raw_point_14_t las_raw_point_14_t;
 void las_raw_point_14_deinit(las_raw_point_14_t *self);
 
 /// Raw point tagged union
-struct las_raw_point_t
+typedef struct las_raw_point_t
 {
     /// The point format to know which member is
     /// the correct one.
@@ -135,12 +136,10 @@ struct las_raw_point_t
         /// When 6 <= point_format_id <= 10.
         las_raw_point_14_t point14;
     };
-};
-
-typedef struct las_raw_point_t las_raw_point_t;
+} las_raw_point_t;
 
 void las_raw_point_copy_from_raw(
-    las_raw_point_t *restrict self,
+    las_raw_point_t *restrict dest,
     const las_raw_point_t *restrict source);
 
 int las_raw_point_eq(const las_raw_point_t *lhs, const las_raw_point_t *rhs);
@@ -155,7 +154,7 @@ void las_raw_point_prepare(las_raw_point_t *point, las_point_format_t point_form
 /// Does __not__ free the `point`, only frees what is 'inside'
 void las_raw_point_deinit(las_raw_point_t *point);
 
-struct las_point_t
+typedef struct las_point_t
 {
     double x;
     double y;
@@ -194,10 +193,7 @@ struct las_point_t
     // all fmt (num can be 0)
     uint16_t num_extra_bytes;
     uint8_t *extra_bytes;
-};
-
-typedef struct las_point_t las_point_t;
-
+} las_point_t;
 
 void las_raw_point_copy_from_point(las_raw_point_t *self,
                                    const las_point_t *point,
@@ -210,5 +206,9 @@ void las_point_copy_from_raw(las_point_t *self,
 void las_point_prepare(las_point_t *self, las_point_format_t point_format);
 
 void las_point_deinit(las_point_t *self);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LAS_C_POINT_H
