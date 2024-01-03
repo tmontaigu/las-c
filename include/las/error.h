@@ -77,12 +77,12 @@ struct las_error_t
 
 typedef struct las_error_t las_error_t;
 
-static int las_error_is_ok(const las_error_t *self)
+static inline int las_error_is_ok(const las_error_t *self)
 {
     return self->kind == LAS_ERROR_OK;
 }
 
-static int las_error_is_failure(const las_error_t *self)
+static inline int las_error_is_failure(const las_error_t *self)
 {
     return self->kind != LAS_ERROR_OK;
 }

@@ -31,16 +31,22 @@ void las_reader_destroy(las_reader_t *reader);
 
 /// Returns a reference to the reader's header
 ///
-/// This header returned correspond the one of the currently
+/// The header returned correspond the one of the currently
 /// opened LAS/LAZ source.
 ///
 /// The reader still owns the header.
 const las_header_t *las_reader_header(const las_reader_t *reader);
 
 /// Reads the next point into a raw point struct
+///
+/// `point` must have been 'prepared' with
+/// `las_raw_point_prepare`
 las_error_t las_reader_read_next_raw(las_reader_t *self, las_raw_point_t *point);
 
 /// Reads the newt point into a point struct
+///
+/// `point` must have been 'prepared' with
+/// `las_point_prepare`
 las_error_t las_reader_read_next(las_reader_t *self, las_point_t *point);
 
 #ifdef __cplusplus

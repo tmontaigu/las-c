@@ -31,6 +31,13 @@ typedef struct
     int is_compressed;
 } las_point_format_t;
 
+uint16_t las_point_standard_size(uint8_t format_id);
+
+static inline uint16_t las_point_format_point_size(const las_point_format_t self)
+{
+    return las_point_standard_size(self.id) + self.num_extra_bytes;
+}
+
 typedef struct
 {
     double x;
@@ -44,42 +51,42 @@ typedef struct
     las_vector_3_t offsets;
 } las_scaling_t;
 
-static inline double scaling_apply(double scale, double offset, int32_t value)
+static inline double scaling_apply(const double scale, const double offset, const int32_t value)
 {
     return (((double)value) * scale) + offset;
 }
 
-static inline int32_t scaling_unapply(double scale, double offset, double value)
+static inline int32_t scaling_unapply(const double scale, const double offset, const double value)
 {
     return (int32_t)((value - offset) / scale);
 }
 
-static inline double las_scaling_apply_x(const las_scaling_t self, int32_t x)
+static inline double las_scaling_apply_x(const las_scaling_t self, const int32_t x)
 {
     return scaling_apply(self.scales.x, self.offsets.x, x);
 }
 
-static inline double las_scaling_apply_y(const las_scaling_t self, int32_t y)
+static inline double las_scaling_apply_y(const las_scaling_t self, const int32_t y)
 {
     return scaling_apply(self.scales.y, self.offsets.y, y);
 }
 
-static inline double las_scaling_apply_z(const las_scaling_t self, int32_t z)
+static inline double las_scaling_apply_z(const las_scaling_t self, const int32_t z)
 {
     return scaling_apply(self.scales.z, self.offsets.z, z);
 }
 
-static inline int32_t las_scaling_unapply_x(const las_scaling_t self, double x)
+static inline int32_t las_scaling_unapply_x(const las_scaling_t self, const double x)
 {
     return scaling_unapply(self.scales.x, self.offsets.x, x);
 }
 
-static inline int32_t las_scaling_unapply_y(const las_scaling_t self, double y)
+static inline int32_t las_scaling_unapply_y(const las_scaling_t self, const double y)
 {
     return scaling_unapply(self.scales.y, self.offsets.y, y);
 }
 
-static inline int32_t las_scaling_unapply_z(const las_scaling_t self, double z)
+static inline int32_t las_scaling_unapply_z(const las_scaling_t self, const double z)
 {
     return scaling_unapply(self.scales.z, self.offsets.z, z);
 }
@@ -130,7 +137,7 @@ struct las_header_t
 
 typedef struct las_header_t las_header_t;
 
-/// Clones and returns the header int out_header
+/// Clones and returns the header in out_header
 ///
 /// - returns 0 if everything was ok.
 /// - returns 1 if allocation failed

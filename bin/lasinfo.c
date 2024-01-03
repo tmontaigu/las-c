@@ -23,7 +23,9 @@ int main(int argc, char * argv[]) {
 
     printf("Version: %" PRIu8 ".%" PRIu8 "\n", hdr->version.major, hdr->version.minor);
     printf("Point Format ID: %" PRIu8 "\n", hdr->point_format.id);
+    printf("Point Format Standard Size: %" PRIu16 "\n", las_point_standard_size(hdr->point_format.id));
     printf("Point Format Extra Bytes: %" PRIu16 "\n", hdr->point_format.num_extra_bytes);
+    printf("Point Format Total Size: %" PRIu16 "\n", las_point_format_point_size(hdr->point_format));
     printf("Point Count: %" PRIu64 "\n", hdr->point_count);
 
     printf("\n");

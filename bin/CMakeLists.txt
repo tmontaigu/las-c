@@ -15,3 +15,6 @@ target_link_libraries(lasinfo PRIVATE las_c)
 
 add_executable(lasconvert lasconvert.c)
 target_link_libraries(lasconvert PRIVATE las_c)
+
+add_executable(lascreate lascreate.c)
+target_link_libraries(lascreate PRIVATE las_c)

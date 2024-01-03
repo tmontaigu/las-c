@@ -17,7 +17,7 @@
 #define LAS_HEADER_1_3_SIZE 235
 #define LAS_HEADER_1_4_SIZE 375
 
-static uint16_t las_header_size_for_version(las_version_t version)
+static uint16_t las_header_size_for_version(const las_version_t version)
 {
     LAS_DEBUG_ASSERT(version.major == 1);
     LAS_DEBUG_ASSERT(version.minor <= 4);
@@ -45,26 +45,26 @@ static uint16_t las_header_size_for_version(las_version_t version)
     return size;
 }
 
-static inline int is_point_format_compressed(uint8_t point_format_id)
+static inline int is_point_format_compressed(uint8_t const point_format_id)
 {
-    uint8_t compression_bit_7 = (point_format_id & 0x80) >> 7;
-    uint8_t compression_bit_6 = (point_format_id & 0x40) >> 6;
-    return (int)(!compression_bit_6 && compression_bit_7);
+    const uint8_t compression_bit_7 = (point_format_id & 0x80) >> 7;
+    const uint8_t compression_bit_6 = (point_format_id & 0x40) >> 6;
+    return !compression_bit_6 && compression_bit_7;
 }
 
-static inline uint8_t compressed_id_to_uncompressed(uint8_t point_format_id)
+static inline uint8_t compressed_id_to_uncompressed(const uint8_t point_format_id)
 {
     return point_format_id & 0x3F;
 }
 
-static int las_version_is_compatible_with_point_format(las_version_t version,
-                                                       uint8_t point_format_id)
+static int las_version_is_compatible_with_point_format(const las_version_t version,
+                                                       const uint8_t point_format_id)
 {
     LAS_DEBUG_ASSERT(version.major == 1);
     LAS_DEBUG_ASSERT(version.minor <= 4);
     LAS_DEBUG_ASSERT(point_format_id <= 10);
 
-    if (point_format_id <= 3 && version.minor >= 0)
+    if (point_format_id <= 3)
     {
         return 1;
     }
@@ -199,6 +199,7 @@ int las_vlr_clone(const las_vlr_t *self, las_vlr_t **out_vlr)
 
     if (las_vlr_clone_into(self, vlr) != 0)
     {
+        free(vlr);
         return 1;
     }
 
@@ -242,7 +243,7 @@ static las_error_t las_point_format_from_id_and_size(las_point_format_t *self,
 
     las_error_t err = {LAS_ERROR_OK};
 
-    int is_compressed = is_point_format_compressed(point_format_id);
+    const int is_compressed = is_point_format_compressed(point_format_id);
     point_format_id = compressed_id_to_uncompressed(point_format_id);
 
     if (point_format_id > 10)
@@ -252,7 +253,7 @@ static las_error_t las_point_format_from_id_and_size(las_point_format_t *self,
         return err;
     }
 
-    uint16_t minimum_size = las_point_standard_size(point_format_id);
+    const uint16_t minimum_size = las_point_standard_size(point_format_id);
     if (point_size < minimum_size)
     {
         err.kind = LAS_ERROR_INVALID_POINT_SIZE;
@@ -467,7 +468,7 @@ las_error_t las_header_read_from(las_source_t *source, las_header_t *header)
     if (n < (uint64_t)header_size)
     {
         // There are some unknown extra header bytes
-        uint32_t extra_size = (uint32_t)header_size - (uint32_t)n;
+        const uint32_t extra_size = (uint32_t)header_size - (uint32_t)n;
         header->extra_header_bytes = malloc(sizeof(uint8_t) * extra_size);
         if (header->extra_header_bytes == NULL)
         {
@@ -545,7 +546,9 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     write_into(wtr, &self->generating_software[0], LAS_GENERATING_SOFTWARE_SIZE);
     write_intog(wtr, &self->file_creation_day_of_year);
     write_intog(wtr, &self->file_creation_year);
-    uint16_t header_size =
+    LAS_ASSERT(self->num_extra_header_bytes <= UINT16_MAX);
+    LAS_ASSERT(UINT16_MAX - (uint16_t)self->num_extra_header_bytes <= UINT16_MAX);
+    const uint16_t header_size =
         las_header_size_for_version(self->version) + self->num_extra_header_bytes;
     write_intog(wtr, (const uint16_t *)&header_size);
 
@@ -666,7 +669,7 @@ int las_header_clone_into(const las_header_t *self, las_header_t *out_header)
 
         for (uint32_t i = 0; i < self->number_of_vlrs; ++i)
         {
-            int failed = las_vlr_clone_into(&self->vlrs[i], &vlrs[i]);
+            const int failed = las_vlr_clone_into(&self->vlrs[i], &vlrs[i]);
             if (failed)
             {
                 las_vlr_array_delete(vlrs, i);

@@ -154,6 +154,9 @@ void las_raw_point_prepare(las_raw_point_t *point, las_point_format_t point_form
 /// Does __not__ free the `point`, only frees what is 'inside'
 void las_raw_point_deinit(las_raw_point_t *point);
 
+/// A more general point type
+///
+/// Works for all point formats
 typedef struct las_point_t
 {
     double x;

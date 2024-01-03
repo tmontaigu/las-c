@@ -14,13 +14,6 @@
 void las_wave_packet_from_buffer(const uint8_t *buffer, las_wave_packet_t *wave_packet);
 void las_wave_packet_to_buffer(const las_wave_packet_t *wave_packet, uint8_t *buffer);
 
-uint16_t las_point_standard_size(uint8_t format_id);
-
-static inline uint16_t las_point_format_point_size(const las_point_format_t self)
-{
-    return las_point_standard_size(self.id) + self.num_extra_bytes;
-}
-
 /// Populates members of the `point10` by reading the `buffer`
 ///
 /// \param buffer Input buffer, its size __must__ be >= header->point_size
