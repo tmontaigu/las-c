@@ -12,17 +12,16 @@ extern "C" {
 
 
 /// Variable Length Record (VLR)
-struct las_vlr_t
+typedef struct las_vlr
 {
     char user_id[LAS_VLR_USER_ID_SIZE];
     uint16_t record_id;
     char description[LAS_VLR_DESCRIPTION_SIZE];
 
     uint16_t data_size;
+    /// Raws data bytes
     uint8_t *data;
-};
-
-typedef struct las_vlr_t las_vlr_t;
+} las_vlr_t;
 
 /// Clones and returns the header int out_header
 ///

@@ -4,12 +4,12 @@
 #include <limits.h>
 
 // Macro this ?
-uint64_t uint64_max(uint64_t a, uint64_t b)
+uint64_t uint64_max(const uint64_t a, const uint64_t b)
 {
     return ((a > b) ? a : b);
 }
 
-uint64_t uint64_min(uint64_t a, uint64_t b)
+uint64_t uint64_min(const uint64_t a, const uint64_t b)
 {
     return ((a < b) ? a : b);
 }
@@ -23,15 +23,15 @@ struct las_memory_source_t
 
 typedef struct las_memory_source_t las_memory_source_t;
 
-uint64_t las_memory_source_read(void *vself, uint64_t n, uint8_t *out_buffer)
+uint64_t las_memory_source_read(void *vself, const uint64_t n, uint8_t *out_buffer)
 {
     LAS_DEBUG_ASSERT(vself != NULL);
     LAS_DEBUG_ASSERT(out_buffer != NULL);
 
     las_memory_source_t *self = (las_memory_source_t *)vself;
 
-    uint64_t bytes_left = self->size - self->pos;
-    uint64_t num_to_read = uint64_min(n, bytes_left);
+    const uint64_t bytes_left = self->size - self->pos;
+    const uint64_t num_to_read = uint64_min(n, bytes_left);
 
     memcpy(out_buffer, &self->buffer[self->pos], num_to_read);
 
@@ -39,7 +39,7 @@ uint64_t las_memory_source_read(void *vself, uint64_t n, uint8_t *out_buffer)
     return num_to_read;
 }
 
-int las_memory_source_seek(void *vself, int64_t pos, las_seek_from_t from)
+int las_memory_source_seek(void *vself, const int64_t pos, const las_seek_from_t from)
 {
     LAS_DEBUG_ASSERT(vself != NULL);
 

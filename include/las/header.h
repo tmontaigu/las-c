@@ -16,13 +16,11 @@ extern "C" {
 #define LAS_NUMBER_OF_POINTS_BY_RETURN_SIZE 15
 #define LAS_LEGACY_NUMBER_OF_POINTS_BY_RETURN_SIZE 5
 
-struct las_version_t
+typedef struct las_version
 {
     uint8_t major;
     uint8_t minor;
-};
-
-typedef struct las_version_t las_version_t;
+} las_version_t;
 
 typedef struct
 {
@@ -31,8 +29,12 @@ typedef struct
     int is_compressed;
 } las_point_format_t;
 
+/// Returns the size in bytes that the given format_id takes
 uint16_t las_point_standard_size(uint8_t format_id);
 
+/// Returns the size in bytes that the point format takes
+///
+/// This incldues the base size and extra bytes (if any)
 static inline uint16_t las_point_format_point_size(const las_point_format_t self)
 {
     return las_point_standard_size(self.id) + self.num_extra_bytes;
@@ -91,6 +93,9 @@ static inline int32_t las_scaling_unapply_z(const las_scaling_t self, const doub
     return scaling_unapply(self.scales.z, self.offsets.z, z);
 }
 
+/// LAS header
+///
+/// Contains metadata describing the points contained in the file
 struct las_header_t
 {
     uint16_t file_source_id;
@@ -132,6 +137,7 @@ struct las_header_t
     uint32_t num_extra_header_bytes;
     uint8_t *extra_header_bytes;
 
+    /// Internal information
     uint32_t offset_to_point_data;
 };
 

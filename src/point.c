@@ -13,29 +13,29 @@
 // remove the gps for `las_point_standard_size` to work
 #define BASE_POINT14_SIZE (30 - sizeof(double))
 
-static int has_gps_time(uint8_t point_format_id)
+static int has_gps_time(const uint8_t point_format_id)
 {
     return point_format_id == 3 || point_format_id == 1 || point_format_id >= 6;
 }
 
-static int has_rgb(uint8_t point_format_id)
+static int has_rgb(const uint8_t point_format_id)
 {
     return point_format_id == 3 || point_format_id == 2 || point_format_id == 5 ||
            point_format_id == 7 || point_format_id == 8 || point_format_id == 10;
 }
 
-static int has_nir(uint8_t point_format_id)
+static int has_nir(const uint8_t point_format_id)
 {
     return point_format_id == 8 || point_format_id == 10;
 }
 
-static int has_waveform(uint8_t point_format_id)
+static int has_waveform(const uint8_t point_format_id)
 {
     return point_format_id == 4 || point_format_id == 5 || point_format_id == 9 ||
            point_format_id == 10;
 }
 
-uint16_t las_point_standard_size(uint8_t format_id)
+uint16_t las_point_standard_size(const uint8_t format_id)
 {
     LAS_ASSERT(format_id <= 10);
 
@@ -808,6 +808,7 @@ int las_raw_point_eq(const las_raw_point_t *lhs, const las_raw_point_t *rhs)
         LAS_ASSERT_M(false, "todo");
     }
 }
+
 void las_point_prepare(las_point_t *self, const las_point_format_t point_format)
 {
     LAS_DEBUG_ASSERT_NOT_NULL(self);

@@ -8,7 +8,7 @@
 #include "private/point.h"
 #include "private/source.h"
 
-struct las_reader_t
+typedef struct las_reader
 {
     /// Source from where we get the LAS/LAZ data
     las_source_t source;
@@ -25,9 +25,7 @@ struct las_reader_t
     /// decompressor and not the source
     Lazrs_SeqLasZipDecompressor *decompressor;
 #endif
-};
-
-typedef struct las_reader_t las_reader_t;
+} las_reader_t;
 
 static inline las_error_t las_reader_fill_point_buffer_from_source(las_reader_t *self)
 {
@@ -36,7 +34,7 @@ static inline las_error_t las_reader_fill_point_buffer_from_source(las_reader_t 
     las_error_t las_err;
     las_err.kind = LAS_ERROR_OK;
 
-    uint64_t n = las_source_read(&self->source, (uint64_t)self->point_size, self->point_buffer);
+    const uint64_t n = las_source_read(&self->source, (uint64_t)self->point_size, self->point_buffer);
     if (n < self->point_size)
     {
         if (las_source_eof(&self->source))
@@ -76,7 +74,7 @@ static inline las_error_t las_reader_fill_point_buffer_from_decompressor(las_rea
     return las_err;
 }
 
-/// Creates the decompressor that correspond the input data.
+/// Creates the decompressor that correspond to the input data.
 static inline las_error_t las_reader_create_decompressor(las_reader_t *self)
 {
     LAS_DEBUG_ASSERT(self != NULL);
@@ -247,7 +245,7 @@ las_error_t las_reader_from_source(las_source_t source, las_reader_t **out_reade
         goto out;
     }
 
-    int is_compressed = reader->header.point_format.is_compressed;
+    const int is_compressed = reader->header.point_format.is_compressed;
     reader->point_size = las_point_format_point_size(reader->header.point_format);
 
     r = las_source_seek(
@@ -293,7 +291,7 @@ out:
     return las_err;
 }
 
-las_error_t las_reader_open_buffer(const uint8_t *buffer, uint64_t size, las_reader_t **out_reader)
+las_error_t las_reader_open_buffer(const uint8_t *buffer, const uint64_t size, las_reader_t **out_reader)
 {
     las_source_t source = las_source_new_memory(buffer, size);
     return las_reader_from_source(source, out_reader);
@@ -309,7 +307,7 @@ las_error_t las_reader_open_file_path(const char *file_path, las_reader_t **out_
     *out_reader = NULL;
 
     las_source_t source;
-    int r = las_source_new_file(file_path, &source);
+    const int r = las_source_new_file(file_path, &source);
 
     if (r != 0)
     {

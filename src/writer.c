@@ -7,7 +7,7 @@
 #include <lazrs/lazrs.h>
 #endif
 
-struct las_writer_t
+typedef struct las_writer
 {
     las_header_t *header;
     las_dest_t *dest;
@@ -22,9 +22,7 @@ struct las_writer_t
     /// and not the `dest`
     Lazrs_SeqLasZipCompressor *compressor;
 #endif
-};
-
-typedef struct las_writer_t las_writer_t;
+} las_writer_t;
 
 las_error_t
 las_writer_open_file_path(const char *file_path, las_header_t *header, las_writer_t **out_writer)
@@ -47,13 +45,12 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
         goto out;
     }
 
-    writer = malloc(sizeof(las_writer_t));
+    writer = calloc(1, sizeof(las_writer_t));
     if (writer == NULL)
     {
         las_err.kind = LAS_ERROR_MEMORY;
         goto out;
     }
-    memset(writer, 0, sizeof(las_writer_t));
 
     const uint16_t point_size = las_point_format_point_size(header->point_format);
     point_buffer = malloc(sizeof(uint8_t) * point_size);
@@ -63,13 +60,12 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
         goto out;
     }
 
-    dest = malloc(sizeof(las_dest_t));
+    dest = calloc(1, sizeof(las_dest_t));
     if (dest == NULL)
     {
         las_err.kind = LAS_ERROR_MEMORY;
         goto out;
     }
-    memset(dest, 0, sizeof(las_dest_t));
 
     if (las_dest_new_file(file_path, dest) != 0)
     {
@@ -213,6 +209,14 @@ las_error_t las_writer_write_raw_point(las_writer_t *self, const las_raw_point_t
     if (point->point_format_id != self->header->point_format.id)
     {
         las_err.kind = LAS_ERROR_INCOMPATIBLE_POINT_FORMAT;
+        return las_err;
+    }
+
+    const uint64_t max_point_count_allowed = (self->header->version.major < 4) ? UINT32_MAX : UINT64_MAX;
+    if (self->header->point_count == max_point_count_allowed)
+    {
+        las_err.kind = LAS_ERROR_POINT_COUNT_TOO_HIGH;
+        las_err.point_count = self->header->point_count;
         return las_err;
     }
 

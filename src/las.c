@@ -64,9 +64,8 @@ void las_error_fprintf(const las_error_t *self, FILE *stream)
         break;
     case LAS_ERROR_POINT_COUNT_TOO_HIGH:
         fprintf(stream,
-                "The point_count `%" PRIu64 "` exceeds the maximum `%" PRIu32 "`",
-                self->point_count,
-                UINT32_MAX);
+                "The point_count `%" PRIu64 "` exceeds the maximum",
+                self->point_count);
         break;
 
 #ifdef WITH_LAZRS

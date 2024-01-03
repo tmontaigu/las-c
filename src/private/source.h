@@ -4,14 +4,12 @@
 #include <stdint.h>
 #include <stdio.h>
 
-enum las_seek_from_t
+typedef enum las_seek_from
 {
     LAS_SEEK_FROM_START = SEEK_SET,
     LAS_SEEK_FROM_CURRENT = SEEK_CUR,
     LAS_SEEK_FROM_END = SEEK_END,
-};
-
-typedef enum las_seek_from_t las_seek_from_t;
+} las_seek_from_t;
 
 typedef uint64_t (*las_source_read_fn)(void *self, uint64_t n, uint8_t *out_buffer);
 
@@ -25,7 +23,7 @@ typedef int (*las_source_eof_fn)(void *self);
 
 typedef int (*las_source_close_fn)(void *self);
 
-struct las_source_t
+typedef struct las_source
 {
     void *inner;
     las_source_read_fn read_fn;
@@ -33,9 +31,7 @@ struct las_source_t
     las_source_eof_fn eof_fn;
     las_source_tell_fn tell_fn;
     las_source_close_fn close_fn;
-};
-
-typedef struct las_source_t las_source_t;
+} las_source_t;
 
 // TODO delete function for las_source
 

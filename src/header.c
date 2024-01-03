@@ -82,7 +82,7 @@ static int las_version_is_compatible_with_point_format(const las_version_t versi
     return 0;
 }
 
-las_error_t las_vlr_read_into(las_source_t *source, las_vlr_t *vlr)
+static las_error_t las_vlr_read_into(las_source_t *source, las_vlr_t *vlr)
 {
     LAS_DEBUG_ASSERT(vlr != NULL);
 
@@ -126,7 +126,7 @@ las_error_t las_vlr_read_into(las_source_t *source, las_vlr_t *vlr)
     return error;
 }
 
-las_error_t las_vlr_write_to(const las_vlr_t *self, las_dest_t *dest)
+static las_error_t las_vlr_write_to(const las_vlr_t *self, las_dest_t *dest)
 {
     LAS_DEBUG_ASSERT_NOT_NULL(self);
     LAS_DEBUG_ASSERT_NOT_NULL(dest);
@@ -549,7 +549,7 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     LAS_ASSERT(self->num_extra_header_bytes <= UINT16_MAX);
     LAS_ASSERT(UINT16_MAX - (uint16_t)self->num_extra_header_bytes <= UINT16_MAX);
     const uint16_t header_size =
-        las_header_size_for_version(self->version) + self->num_extra_header_bytes;
+        las_header_size_for_version(self->version) + (uint16_t)self->num_extra_header_bytes;
     write_intog(wtr, (const uint16_t *)&header_size);
 
     uint16_t total_vlr_byte_size = 0;

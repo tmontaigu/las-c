@@ -14,7 +14,7 @@ typedef struct las_raw_point_t las_raw_point_t;
 
 typedef struct las_point_t las_point_t;
 
-typedef struct las_reader_t las_reader_t;
+typedef struct las_reader las_reader_t;
 
 /// Creates a reader that reads from a file
 ///

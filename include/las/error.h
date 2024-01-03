@@ -37,7 +37,8 @@ enum las_error_kind_t
 
 typedef enum las_error_kind_t las_error_kind_t;
 
-struct las_error_t
+/// Represent errors that can happen when reading/writing LAS/LAZ files
+typedef struct las_error
 {
     las_error_kind_t kind;
     union
@@ -73,9 +74,7 @@ struct las_error_t
         Lazrs_Result lazrs;
 #endif
     };
-};
-
-typedef struct las_error_t las_error_t;
+} las_error_t;
 
 static inline int las_error_is_ok(const las_error_t *self)
 {
@@ -87,6 +86,7 @@ static inline int las_error_is_failure(const las_error_t *self)
     return self->kind != LAS_ERROR_OK;
 }
 
+/// Prints a description of the error to the specified stream
 void las_error_fprintf(const las_error_t *self, FILE *stream);
 
 #ifdef __cplusplus

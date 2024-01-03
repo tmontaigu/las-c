@@ -15,6 +15,7 @@ static double fmind(double a, double b)
     return (a < b) ? a : b;
 }
 
+// Example of how to read a file
 int main(int argc, const char *argv[])
 {
     if (argc != 2)
@@ -40,7 +41,7 @@ int main(int argc, const char *argv[])
     uint64_t point_count = header->point_count;
     printf("Point count:  %" PRIu64 "\n", point_count);
     printf("Point format: %" PRIu8 "\n", header->point_format.id);
-    //printf("Point size:   %" PRIu16 "\n", header->point_size);
+    printf("Point size:   %" PRIu16 "\n", las_point_format_point_size(header->point_format));
 
     if (point_count == 0)
     {

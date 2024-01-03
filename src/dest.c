@@ -11,7 +11,7 @@ struct las_file_dest_t
 
 typedef struct las_file_dest_t las_file_dest_t;
 
-uint64_t las_file_dest_write(las_file_dest_t *self, const uint8_t *buffer, uint64_t n)
+uint64_t las_file_dest_write(las_file_dest_t *self, const uint8_t *buffer, const uint64_t n)
 {
     LAS_DEBUG_ASSERT(self != NULL);
     LAS_DEBUG_ASSERT(self->file != NULL);
@@ -22,7 +22,7 @@ uint64_t las_file_dest_write(las_file_dest_t *self, const uint8_t *buffer, uint6
     return (uint64_t)fwrite(buffer, sizeof(uint8_t), (size_t)n, self->file);
 }
 
-int las_file_dest_seek(las_file_dest_t *self, int64_t pos, las_seek_from_t from)
+int las_file_dest_seek(las_file_dest_t *self, int64_t pos, const las_seek_from_t from)
 {
     LAS_DEBUG_ASSERT(self->file != NULL);
 
@@ -74,7 +74,7 @@ las_error_t las_file_dest_err_fn(las_file_dest_t *self)
 
 //=============================================================================
 
-uint64_t las_dest_write(las_dest_t *self, const uint8_t *buffer, uint64_t n)
+uint64_t las_dest_write(las_dest_t *self, const uint8_t *buffer, const uint64_t n)
 {
     LAS_DEBUG_ASSERT(self != NULL);
     LAS_DEBUG_ASSERT(self->inner != NULL);
@@ -84,7 +84,7 @@ uint64_t las_dest_write(las_dest_t *self, const uint8_t *buffer, uint64_t n)
     return self->write_fn(self->inner, buffer, n);
 }
 
-int las_dest_seek(las_dest_t *self, int64_t n, las_seek_from_t from)
+int las_dest_seek(las_dest_t *self, int64_t n, const las_seek_from_t from)
 {
     LAS_DEBUG_ASSERT(self != NULL);
     LAS_DEBUG_ASSERT(self->inner != NULL);
