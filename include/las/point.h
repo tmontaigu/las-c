@@ -31,7 +31,7 @@ bool las_wave_packet_eq(const las_wave_packet_t *lhs, const las_wave_packet_t *r
 ///
 /// This struct covers members for point format [0, 5]
 /// which were introduced in LAS 1.0 and 1.3
-typedef struct las_raw_point_10_t
+typedef struct las_raw_point_10
 {
     int32_t x;
     int32_t y;
@@ -77,7 +77,7 @@ void las_raw_point_10_deinit(las_raw_point_10_t *point);
 ///
 /// This struct covers members for point format [6, 10]
 /// which were introduced in LAS 1.4
-typedef struct las_raw_point_14_t
+typedef struct las_raw_point_14
 {
     int32_t x;
     int32_t y;

@@ -3,22 +3,11 @@ project(las_c)
 
 set(CMAKE_C_STANDARD 17)
 
-if (MSVC)
-    add_compile_options(/fsanitize=address /0d)
-    add_link_options(/fsanitize=address)
-else()
-    add_compile_options(
-        #-fsanitize=address
-        -pedantic
-        -Wconversion
-    )
-    #add_link_options(-fsanitize=address)
-endif()
-
-
 option(WITH_DEBUG_ASSERTIONS "Enable debug assertions" ON)
 option(WITH_LAZRS "Build with lazrs to support LAZ" OFF)
 option(BUIlD_SHARED_LIBS "Build libraries as shared" OFF)
+option(WITH_LTO OFF)
+option(NATIVE_BUILD OFF)
 
 add_library(las_c)
 set_property(TARGET las_c PROPERTY C_STANDARD 17)
@@ -41,10 +30,23 @@ else()
     message(FATAL_ERROR "Failed to get endianness")
 endif()
 
+if (WITH_LTO)
+    include(CheckIPOSupported)
+    check_ipo_supported() # fatal error if IPO is not supported
+    set_property(TARGET las_c PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif ()
+
+if (NATIVE_BUILD)
+    target_compile_options(las_c INTERFACE -march=native)
+endif ()
+
 if (WITH_LAZRS)
     add_subdirectory(laz-rs-c)
     target_link_libraries(las_c PRIVATE laz-rs-c)
     target_compile_definitions(las_c PRIVATE -DWITH_LAZRS)
+    if (NATIVE_BUILD)
+        set(ENV{RUSTFLAGS} "-C target-cpu=native")
+    endif ()
 endif ()
 
 include(cmake/CompilerWarnings.cmake)
@@ -55,5 +57,3 @@ add_subdirectory(include)
 add_subdirectory(bin)
 enable_testing()
 add_subdirectory(tests)
-
-#target_compile_options(las_c PRIVATE '-Wconversion')

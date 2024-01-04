@@ -287,8 +287,15 @@ las_error_t las_header_validate(const las_header_t *self)
 {
     LAS_DEBUG_ASSERT(self != NULL);
 
-    las_error_t err;
-    err.kind = LAS_ERROR_OK;
+    las_error_t err = {.kind =  LAS_ERROR_OK};
+
+#ifdef LAS_DEBUG_ASSERTIONS
+    if (self->number_of_vlrs != 0 && self->vlrs == NULL)
+    {
+        fprintf(stderr, "number_of_vlrs is non-zero, but vlrs is a NULL pointer\n");
+        abort();
+    }
+#endif
 
     if (self->version.major != 1 || self->version.minor > 4)
     {
@@ -328,7 +335,7 @@ las_error_t las_header_validate_for_writing(const las_header_t *self)
     return las_err;
 }
 
-void las_header_reset(las_header_t *header)
+static void las_header_reset(las_header_t *header)
 {
     memset(header, 0, sizeof(las_header_t));
 }
@@ -336,8 +343,7 @@ void las_header_reset(las_header_t *header)
 las_error_t las_header_read_from(las_source_t *source, las_header_t *header)
 {
     uint64_t n = 0;
-    las_error_t las_err;
-    las_err.kind = LAS_ERROR_OK;
+    las_error_t las_err = {LAS_ERROR_OK};
 
     las_header_reset(header);
 
@@ -475,10 +481,11 @@ las_error_t las_header_read_from(las_source_t *source, las_header_t *header)
             las_err.kind = LAS_ERROR_MEMORY;
             return las_err;
         }
-        n += las_source_read(source, header->num_extra_header_bytes, header->extra_header_bytes);
+        (void)las_source_read(source, header->num_extra_header_bytes, header->extra_header_bytes);
         header->num_extra_header_bytes = extra_size;
     }
 
+    // Read the VLRs
     if (header->number_of_vlrs > 0)
     {
         header->vlrs = malloc(sizeof(las_vlr_t) * header->number_of_vlrs);
@@ -557,7 +564,7 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     {
         total_vlr_byte_size += las_vlr_size(&self->vlrs[i]);
     }
-    const uint32_t offset_to_point_data = (uint32_t)(header_size + total_vlr_byte_size);
+    const uint32_t offset_to_point_data = header_size + total_vlr_byte_size;
 
     write_intog(wtr, &offset_to_point_data);
     write_intog(wtr, &self->number_of_vlrs);
@@ -570,7 +577,7 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     {
         const uint32_t val = (self->number_of_points_by_return[i] > (uint64_t)UINT32_MAX)
                                  ? UINT32_MAX
-                                 : self->number_of_points_by_return[i];
+                                 : (uint32_t) self->number_of_points_by_return[i];
         write_intog(wtr, &val);
     }
 

@@ -20,7 +20,7 @@ typedef struct las_writer
     /// Is not null when we are writing points as compressed
     /// meaning we should write the bytes into the `compressor`
     /// and not the `dest`
-    Lazrs_SeqLasZipCompressor *compressor;
+    Lazrs_LasZipCompressor *compressor;
 #endif
 } las_writer_t;
 
@@ -36,7 +36,7 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
     uint8_t *point_buffer = NULL;
     las_dest_t *dest = NULL;
 #ifdef WITH_LAZRS
-    Lazrs_SeqLasZipCompressor *compressor = NULL;
+    Lazrs_LasZipCompressor *compressor = NULL;
 #endif
 
     las_err = las_header_validate_for_writing(header);
@@ -94,7 +94,7 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
         uint16_t num_extra_bytes = header->point_format.num_extra_bytes;
         params.num_extra_bytes = num_extra_bytes;
 
-        Lazrs_Result r = lazrs_compressor_new_for_point_format(params, &compressor);
+        Lazrs_Result r = lazrs_compressor_new_for_point_format(params, false, &compressor);
         if (r != LAZRS_OK)
         {
             las_err.kind = LAS_ERROR_LAZRS;

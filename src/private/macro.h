@@ -46,6 +46,7 @@
 
 #define LAS_DEBUG_ASSERT(condition)
 #define LAS_DEBUG_ASSERT_M(condition, message)
+#define LAS_DEBUG_ASSERT_NOT_NULL
 
 #endif
 
