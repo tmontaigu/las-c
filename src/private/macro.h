@@ -23,24 +23,27 @@
         abort();                                                                                   \
     }
 
-#define LAS_ASSERT_M(condition, message)                                                           \
-    if (!(condition))                                                                              \
+#define LAS_ASSERT_M(condition, format, ...)                                                       \
+    do                                                                                             \
     {                                                                                              \
-        fprintf(stderr,                                                                            \
-                "%s::%d::%s: condition `%s` failed.\n%s\n",                                        \
-                __FILE__,                                                                          \
-                __LINE__,                                                                          \
-                __func__,                                                                          \
-                #condition,                                                                        \
-                message);                                                                          \
-        abort();                                                                                   \
-    }
+        if (!(condition))                                                                          \
+        {                                                                                          \
+            fprintf(stderr,                                                                        \
+                    "%s::%d::%s: condition `%s` failed.\n" format "\n",                            \
+                    __FILE__,                                                                      \
+                    __LINE__,                                                                      \
+                    __func__,                                                                      \
+                    #condition,                                                                    \
+                    ##__VA_ARGS__);                                                                \
+            abort();                                                                               \
+        }                                                                                          \
+    } while (0)
 
 #if LAS_DEBUG_ASSERTIONS == 1
 
 #define LAS_DEBUG_ASSERT(condition) LAS_ASSERT(condition)
 #define LAS_DEBUG_ASSERT_NOT_NULL(ptr) LAS_ASSERT((ptr) != NULL)
-#define LAS_DEBUG_ASSERT_M(condition, message) LAS_ASSERT_M(condition, message)
+#define LAS_DEBUG_ASSERT_M(condition, message, ...) LAS_ASSERT_M(condition, message, ##__VA_ARGS__)
 
 #else
 

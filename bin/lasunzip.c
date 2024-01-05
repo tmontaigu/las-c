@@ -4,44 +4,30 @@
 #include <las/las.h>
 #include <malloc.h>
 
-int main(int argc, char * argv[]) {
-    if (argc < 2) {
+int main(int argc, char *argv[])
+{
+    if (argc < 2)
+    {
         fprintf(stderr, "USAGE: %s INPUT_FILE [OUTPUT_FILE]", argv[0]);
         return 1;
     }
 
     const char *filename = argv[1];
+    const char *dest_filename = argv[2];
+    const uint64_t chunk_size = 10000000; // TODO make this an argument
+    //const uint64_t chunk_size = 2; // TODO make this an argument
 
-    char *dest_filename;
-    if (argc == 3)
+
+    if (strcmp(filename, dest_filename) == 0)
     {
-        if (strcmp(filename, argv[2]) == 0)
-        {
-            fprintf(stderr, "The output filename must be different than the input filename");
-            return 1;
-        }
-
-        const char *last_dot = strrchr(argv[2], '.');
-        if (last_dot == NULL || (strcmp(last_dot, ".las") != 0))
-        {
-            fprintf(stderr, "The output file name must end with '.las'");
-            return 1;
-        }
-        // duplicate to make memory handling easier
-        dest_filename = malloc(sizeof(char) * (strlen(argv[2]) + 1));
-        strcpy(dest_filename, argv[2]);
-    } else {
-        // strdup will be standard in C23
-        unsigned long long len = strlen(filename);
-        dest_filename= malloc(sizeof(char) * (len + 1));
-        strcpy(dest_filename, filename);
-        dest_filename[len - 1] = 's';
+        fprintf(stderr, "The output filename must be different than the input filename");
+        return 1;
     }
 
-    las_error_t err = { LAS_ERROR_OK };
+    las_error_t err = {.kind = LAS_ERROR_OK};
     las_reader_t *reader = NULL;
     las_writer_t *writer = NULL;
-    las_raw_point_t raw_point = {0};
+    las_raw_point_t *raw_points = NULL;
 
     err = las_reader_open_file_path(filename, &reader);
     if (las_error_is_failure(&err))
@@ -51,11 +37,20 @@ int main(int argc, char * argv[]) {
 
     const las_header_t *reader_header = las_reader_header(reader);
     las_header_t *writer_header;
-    // TODO handle error
-    las_header_clone(reader_header, &writer_header);
+    if (las_header_clone(reader_header, &writer_header) == 1)
+    {
+        fprintf(stderr, "Failed to clone LAS header\n");
+        goto main_exit;
+    }
 
-    las_raw_point_prepare(&raw_point, writer_header->point_format);
-
+    // Prepare the point buffer for "chunked" reading
+    raw_points = malloc(sizeof(las_raw_point_t) * chunk_size);
+    if (raw_points == NULL)
+    {
+        fprintf(stderr, "Not enough memory\n");
+        goto main_exit;
+    }
+    las_raw_point_prepare_many(raw_points, chunk_size, reader_header->point_format);
 
     err = las_writer_open_file_path(dest_filename, writer_header, &writer);
     if (las_error_is_failure(&err))
@@ -63,31 +58,34 @@ int main(int argc, char * argv[]) {
         goto main_exit;
     }
 
-    uint64_t point_count = reader_header->point_count;
-
-    for (uint64_t i = 0; i < point_count; i++)
+    uint64_t points_left = reader_header->point_count;
+    while (points_left != 0)
     {
-        err = las_reader_read_next_raw(reader, &raw_point);
+        const uint64_t num_points_to_read = (chunk_size > points_left) ? points_left : chunk_size;
+        // printf("Point left: %zu n: %zu\n", points_left, num_points_to_read);
+        err = las_reader_read_many_next_raw(reader, raw_points, num_points_to_read);
         if (las_error_is_failure(&err))
         {
             goto main_exit;
         }
 
-        err = las_writer_write_raw_point(writer, &raw_point);
+        err = las_writer_write_many_raw_points(writer, raw_points, num_points_to_read);
         if (las_error_is_failure(&err))
         {
             goto main_exit;
         }
+
+        points_left -= num_points_to_read;
     }
 
 main_exit:
     las_reader_destroy(reader);
     las_writer_delete(writer);
-    las_raw_point_deinit(&raw_point);
 
-    if (dest_filename != NULL)
+    if (raw_points != NULL)
     {
-        free(dest_filename);
+        las_raw_point_deinit_many(raw_points, chunk_size);
+        free(raw_points);
     }
 
     if (las_error_is_failure(&err))

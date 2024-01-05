@@ -6,8 +6,9 @@
 #include "las/header.h"
 
 #include <assert.h>
-#include <stdlib.h>
+#include <inttypes.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define BASE_POINT10_SIZE 20
 // remove the gps for `las_point_standard_size` to work
@@ -371,7 +372,11 @@ void las_raw_point_14_from_buffer(const uint8_t *buffer,
     LAS_DEBUG_ASSERT((rdr.ptr - buffer) == las_point_standard_size(point_format.id));
     if (point14->extra_bytes != NULL)
     {
-        LAS_DEBUG_ASSERT(point14->num_extra_bytes == point_format.num_extra_bytes);
+        LAS_DEBUG_ASSERT_M(point14->num_extra_bytes == point_format.num_extra_bytes,
+                           "num extra bytes mismatch, point says '%" PRIu16
+                           "', point format says '%" PRIu16 "'",
+                           point14->num_extra_bytes,
+                           point_format.num_extra_bytes);
         read_into(&rdr, point14->extra_bytes, point14->num_extra_bytes);
     }
 
@@ -544,9 +549,8 @@ void las_raw_point_copy_from_point(las_raw_point_t *self,
     }
 }
 
-void las_raw_point_copy_from_raw(
-    las_raw_point_t *restrict dest,
-    const las_raw_point_t *restrict source)
+void las_raw_point_copy_from_raw(las_raw_point_t *restrict dest,
+                                 const las_raw_point_t *restrict source)
 {
     LAS_DEBUG_ASSERT_NOT_NULL(dest);
     LAS_DEBUG_ASSERT_NOT_NULL(source);
@@ -568,7 +572,8 @@ void las_raw_point_copy_from_raw(
             uint8_t *eb = d->extra_bytes;
             d->extra_bytes = eb;
         }
-    } else if (dest->point_format_id >= 6 && source->point_format_id >= 6)
+    }
+    else if (dest->point_format_id >= 6 && source->point_format_id >= 6)
     {
         // Simple case where we can simply copy data
         las_raw_point_14_t *d = &dest->point14;
@@ -585,7 +590,8 @@ void las_raw_point_copy_from_raw(
             uint8_t *eb = d->extra_bytes;
             d->extra_bytes = eb;
         }
-    } else if (dest->point_format_id <= 5 && source->point_format_id >= 6)
+    }
+    else if (dest->point_format_id <= 5 && source->point_format_id >= 6)
     {
         // Here the underlying data is not totally the same, so we manually copy
         las_raw_point_10_t *d = &dest->point10;
@@ -597,13 +603,13 @@ void las_raw_point_copy_from_raw(
         d->z = s->z;
 
         d->intensity = s->intensity;
-        d->return_number = s->return_number & (uint8_t) 0b0000111;
+        d->return_number = s->return_number & (uint8_t)0b0000111;
         d->number_of_returns = s->number_of_returns & 0b0000111;
 
         d->scan_direction_flag = s->scan_direction_flag;
         d->edge_of_flight_line = s->edge_of_flight_line;
 
-        d->classification = s->classification & (uint8_t) 0b00011111;
+        d->classification = s->classification & (uint8_t)0b00011111;
         d->synthetic = s->synthetic;
         d->key_point = s->key_point;
         d->withheld = s->withheld;
@@ -626,7 +632,9 @@ void las_raw_point_copy_from_raw(
             LAS_DEBUG_ASSERT_NOT_NULL(s->extra_bytes);
             memcpy(d->extra_bytes, s->extra_bytes, s->num_extra_bytes);
         }
-    } else if (dest->point_format_id >= 6 && source->point_format_id <= 5) {
+    }
+    else if (dest->point_format_id >= 6 && source->point_format_id <= 5)
+    {
         // Here the underlying data is not totally the same, so we manually copy
         las_raw_point_14_t *d = &dest->point14;
         const las_raw_point_10_t *s = &source->point10;
@@ -669,7 +677,6 @@ void las_raw_point_copy_from_raw(
             memcpy(d->extra_bytes, s->extra_bytes, s->num_extra_bytes);
         }
     }
-
 }
 
 void las_point_copy_from_raw(las_point_t *self,
@@ -780,25 +787,16 @@ int las_raw_point_eq(const las_raw_point_t *lhs, const las_raw_point_t *rhs)
         const las_raw_point_10_t *rpl = &rhs->point10;
         const las_raw_point_10_t *rph = &rhs->point10;
 
-        return rpl->x == rph->x &&
-               rpl->y == rph->y &&
-               rpl->z == rph->z &&
-               rpl->intensity == rph->intensity &&
-               rpl->return_number == rph->return_number &&
+        return rpl->x == rph->x && rpl->y == rph->y && rpl->z == rph->z &&
+               rpl->intensity == rph->intensity && rpl->return_number == rph->return_number &&
                rpl->number_of_returns == rph->number_of_returns &&
                rpl->scan_direction_flag == rph->scan_direction_flag &&
                rpl->edge_of_flight_line == rph->edge_of_flight_line &&
-               rpl->classification == rph->classification &&
-               rpl->synthetic == rph->synthetic &&
-               rpl->key_point == rph->key_point &&
-               rpl->withheld == rph->withheld &&
-               rpl->scan_angle_rank == rph->scan_angle_rank &&
-               rpl->user_data == rph->user_data &&
-               rpl->point_source_id == rph->point_source_id &&
-               rpl->gps_time == rph->gps_time &&
-               rpl->red == rph->red &&
-               rpl->green == rph->green &&
-               rpl->blue == rph->blue &&
+               rpl->classification == rph->classification && rpl->synthetic == rph->synthetic &&
+               rpl->key_point == rph->key_point && rpl->withheld == rph->withheld &&
+               rpl->scan_angle_rank == rph->scan_angle_rank && rpl->user_data == rph->user_data &&
+               rpl->point_source_id == rph->point_source_id && rpl->gps_time == rph->gps_time &&
+               rpl->red == rph->red && rpl->green == rph->green && rpl->blue == rph->blue &&
                las_wave_packet_eq(&rpl->wave_packet, &rph->wave_packet) &&
                rpl->num_extra_bytes == rph->num_extra_bytes &&
                (memcmp(rpl->extra_bytes, rph->extra_bytes, rpl->num_extra_bytes) == 0);

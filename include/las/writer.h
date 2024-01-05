@@ -27,6 +27,10 @@ void las_writer_delete(las_writer_t *self);
 /// Writes the `point` into the writer's output
 las_error_t las_writer_write_raw_point(las_writer_t *self, const las_raw_point_t *point);
 
+las_error_t las_writer_write_many_raw_points(
+    las_writer_t *self, const las_raw_point_t *points, const uint64_t num_points);
+
+
 #ifdef __cplusplus
 }
 #endif

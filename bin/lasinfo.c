@@ -9,7 +9,7 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 
-    las_error_t las_err = { LAS_ERROR_OK };
+    las_error_t las_err = { .kind = LAS_ERROR_OK };
 
     las_reader_t *reader;
 

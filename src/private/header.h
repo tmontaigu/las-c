@@ -10,7 +10,8 @@
 
 void las_vlr_deinit(las_vlr_t *self);
 
-las_error_t las_header_read_from(las_source_t *source, las_header_t *header);
+las_error_t
+las_header_read_from(las_source_t *source, las_header_t *header, bool *is_data_compressed);
 
 las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest);
 

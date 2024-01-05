@@ -35,13 +35,9 @@ static inline void read_into(buffer_reader_t *self, void *dst, uint64_t count)
         read_into(self, dst, sizeof(type));                                                        \
     }
 
-define_read_into(int32_t)
-define_read_into(uint8_t)
-define_read_into(uint16_t)
-define_read_into(uint32_t)
-define_read_into(uint64_t)
-define_read_into(float)
-define_read_into(double)
+define_read_into(int32_t) define_read_into(uint8_t) define_read_into(uint16_t)
+    define_read_into(uint32_t) define_read_into(uint64_t) define_read_into(float)
+        define_read_into(double)
 
 /// Definition of a generic read_into.
 ///
@@ -60,17 +56,16 @@ define_read_into(double)
 //// read_intog(&rdr, &a);
 /// ```
 #define read_intog(reader, dst)                                                                    \
-    _Generic((dst),                        \
-        int32_t* : read_into_int32_t,    \
-        uint8_t* : read_into_uint8_t,    \
-        uint16_t* : read_into_uint16_t,  \
-        uint32_t* : read_into_uint32_t,  \
-        uint64_t* : read_into_uint64_t,  \
-        float* : read_into_float,        \
-        double* : read_into_double       \
-    )(reader, dst)
+    _Generic((dst),                                                                                \
+        int32_t *: read_into_int32_t,                                                              \
+        uint8_t *: read_into_uint8_t,                                                              \
+        uint16_t *: read_into_uint16_t,                                                            \
+        uint32_t *: read_into_uint32_t,                                                            \
+        uint64_t *: read_into_uint64_t,                                                            \
+        float *: read_into_float,                                                                  \
+        double *: read_into_double)(reader, dst)
 
-typedef struct buffer_writer_t
+            typedef struct buffer_writer_t
 {
     uint8_t *ptr;
 } buffer_writer_t;
@@ -93,13 +88,9 @@ static inline void write_into(buffer_writer_t *self, const void *src, uint64_t c
         write_into(self, src, sizeof(type));                                                       \
     }
 
-define_write_into(int32_t)
-define_write_into(uint8_t)
-define_write_into(uint16_t)
-define_write_into(uint32_t)
-define_write_into(uint64_t)
-define_write_into(float)
-define_write_into(double)
+define_write_into(int32_t) define_write_into(uint8_t) define_write_into(uint16_t)
+    define_write_into(uint32_t) define_write_into(uint64_t) define_write_into(float)
+        define_write_into(double)
 
 /// Definition of a generic write_into.
 ///
@@ -118,14 +109,13 @@ define_write_into(double)
 //// write_intog(&rdr, (uint32_t) 13);
 /// ```
 #define write_intog(writer, src)                                                                   \
-    _Generic((src),                       \
-        const int32_t* : write_into_int32_t,    \
-        const uint8_t* : write_into_uint8_t,    \
-        const uint16_t* : write_into_uint16_t,  \
-        const uint32_t* : write_into_uint32_t,  \
-        const uint64_t* : write_into_uint64_t,  \
-        const float* : write_into_float,        \
-        const double* : write_into_double       \
-    )(writer, src)
+    _Generic((src),                                                                                \
+        const int32_t *: write_into_int32_t,                                                       \
+        const uint8_t *: write_into_uint8_t,                                                       \
+        const uint16_t *: write_into_uint16_t,                                                     \
+        const uint32_t *: write_into_uint32_t,                                                     \
+        const uint64_t *: write_into_uint64_t,                                                     \
+        const float *: write_into_float,                                                           \
+        const double *: write_into_double)(writer, src)
 
 #endif // LAS_C_PRIV_UTILS_H

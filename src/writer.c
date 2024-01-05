@@ -12,8 +12,9 @@ typedef struct las_writer
     las_header_t *header;
     las_dest_t *dest;
     /// Holds the raw bytes of a point.
-    /// Its size is point_size
+    /// Its size is point_size * num_points_in_buffer
     uint8_t *point_buffer;
+    uint64_t num_points_in_buffer;
     uint16_t point_size;
 
 #ifdef WITH_LAZRS
@@ -59,6 +60,7 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
         las_err.kind = LAS_ERROR_MEMORY;
         goto out;
     }
+    writer->num_points_in_buffer = 1;
 
     dest = calloc(1, sizeof(las_dest_t));
     if (dest == NULL)
@@ -94,7 +96,7 @@ las_writer_open_file_path(const char *file_path, las_header_t *header, las_write
         uint16_t num_extra_bytes = header->point_format.num_extra_bytes;
         params.num_extra_bytes = num_extra_bytes;
 
-        Lazrs_Result r = lazrs_compressor_new_for_point_format(params, false, &compressor);
+        Lazrs_Result r = lazrs_compressor_new_for_point_format(params, true /* prefer_parallel */, &compressor);
         if (r != LAZRS_OK)
         {
             las_err.kind = LAS_ERROR_LAZRS;
@@ -212,7 +214,8 @@ las_error_t las_writer_write_raw_point(las_writer_t *self, const las_raw_point_t
         return las_err;
     }
 
-    const uint64_t max_point_count_allowed = (self->header->version.major < 4) ? UINT32_MAX : UINT64_MAX;
+    const uint64_t max_point_count_allowed =
+        (self->header->version.major < 4) ? UINT32_MAX : UINT64_MAX;
     if (self->header->point_count == max_point_count_allowed)
     {
         las_err.kind = LAS_ERROR_POINT_COUNT_TOO_HIGH;
@@ -230,7 +233,7 @@ las_error_t las_writer_write_raw_point(las_writer_t *self, const las_raw_point_t
     {
         las_raw_point_14_to_buffer(&point->point14, self->header->point_format, self->point_buffer);
         const int max_value = LAS_NUMBER_OF_POINTS_BY_RETURN_SIZE - 1;
-        self->header->number_of_points_by_return[point->point10.return_number & max_value]++;
+        self->header->number_of_points_by_return[point->point14.return_number & max_value]++;
     }
 
 #ifdef WITH_LAZRS
@@ -261,6 +264,107 @@ las_error_t las_writer_write_raw_point(las_writer_t *self, const las_raw_point_t
 #endif
 
     self->header->point_count++;
+
+    return las_err;
+}
+
+las_error_t las_writer_write_many_raw_points(las_writer_t *self,
+                                             const las_raw_point_t *points,
+                                             const uint64_t num_points)
+{
+    LAS_DEBUG_ASSERT_NOT_NULL(self);
+    LAS_DEBUG_ASSERT_NOT_NULL(points);
+
+    las_error_t las_err = {LAS_ERROR_OK};
+
+    for (uint64_t i = 0; i < num_points; ++i)
+    {
+        if (points[i].point_format_id != self->header->point_format.id)
+        {
+            las_err.kind = LAS_ERROR_INCOMPATIBLE_POINT_FORMAT;
+            return las_err;
+        }
+    }
+
+    const uint64_t max_point_count_allowed =
+        (self->header->version.major < 4) ? UINT32_MAX : UINT64_MAX;
+    if (self->header->point_count + num_points == max_point_count_allowed)
+    {
+        las_err.kind = LAS_ERROR_POINT_COUNT_TOO_HIGH;
+        las_err.point_count = self->header->point_count;
+        return las_err;
+    }
+
+    // Resize internal buffer if needed
+    if (self->num_points_in_buffer < num_points)
+    {
+        uint8_t *buffer = realloc(self->point_buffer, self->point_size * num_points);
+        if (buffer == NULL)
+        {
+            las_err.kind = LAS_ERROR_MEMORY;
+            return las_err;
+        }
+        self->point_buffer = buffer;
+        self->num_points_in_buffer = num_points;
+    }
+
+    // Write the points to internal buffer
+    uint8_t *buffer = self->point_buffer;
+    if (self->header->point_format.id <= 5)
+    {
+        for (uint64_t i = 0; i < num_points; ++i)
+        {
+            las_raw_point_10_to_buffer(&points[i].point10, self->header->point_format, buffer);
+            const int max_value = LAS_LEGACY_NUMBER_OF_POINTS_BY_RETURN_SIZE - 1;
+            self->header->number_of_points_by_return[points[i].point10.return_number % max_value]++;
+            buffer += self->point_size;
+            LAS_DEBUG_ASSERT(buffer <=
+                             self->point_buffer + (self->point_size * self->num_points_in_buffer));
+        }
+    }
+    else
+    {
+        for (uint64_t i = 0; i < num_points; ++i)
+        {
+            las_raw_point_14_to_buffer(&points[i].point14, self->header->point_format, buffer);
+            const int max_value = LAS_NUMBER_OF_POINTS_BY_RETURN_SIZE - 1;
+            self->header->number_of_points_by_return[points[i].point14.return_number % max_value]++;
+            buffer += self->point_size;
+            LAS_DEBUG_ASSERT(buffer <=
+                             self->point_buffer + (self->point_size * self->num_points_in_buffer));
+        }
+    }
+
+#ifdef WITH_LAZRS
+    if (self->compressor != NULL)
+    {
+        const Lazrs_Result r = lazrs_compressor_compress_many(
+            self->compressor, self->point_buffer, self->point_size * num_points);
+        if (r != LAZRS_OK)
+        {
+            las_err.kind = LAS_ERROR_LAZRS;
+            las_err.lazrs = r;
+        }
+    }
+    else
+    {
+        const uint64_t n =
+            las_dest_write(self->dest, self->point_buffer, self->point_size * num_points);
+        if (n < self->point_size * num_points)
+        {
+            las_err = las_dest_err(self->dest);
+        }
+    }
+#else  // WITH_LAZRS
+    const uint64_t n =
+        las_dest_write(self->dest, self->point_buffer, self->point_size * num_points);
+    if (n < self->point_size * num_points)
+    {
+        las_err = las_dest_err(self->dest);
+    }
+#endif // WITH_LAZRS
+
+    self->header->point_count += num_points;
 
     return las_err;
 }

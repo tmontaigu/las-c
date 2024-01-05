@@ -235,11 +235,13 @@ const las_vlr_t *las_header_find_laszip_vlr(const las_header_t *las_header)
     return vlr;
 }
 
-static las_error_t las_point_format_from_id_and_size(las_point_format_t *self,
-                                                     uint8_t point_format_id,
-                                                     const uint16_t point_size)
+static las_error_t las_point_format_from_id_and_size(uint8_t point_format_id,
+                                                     const uint16_t point_size,
+                                                     las_point_format_t *out_self,
+                                                     bool *out_is_compressed)
 {
-    LAS_DEBUG_ASSERT_NOT_NULL(self);
+    LAS_DEBUG_ASSERT_NOT_NULL(out_self);
+    LAS_DEBUG_ASSERT_NOT_NULL(out_is_compressed);
 
     las_error_t err = {LAS_ERROR_OK};
 
@@ -263,9 +265,9 @@ static las_error_t las_point_format_from_id_and_size(las_point_format_t *self,
         return err;
     }
 
-    self->id = point_format_id;
-    self->num_extra_bytes = point_size - minimum_size;
-    self->is_compressed = is_compressed;
+    out_self->id = point_format_id;
+    out_self->num_extra_bytes = point_size - minimum_size;
+    *out_is_compressed = is_compressed;
 
     return err;
 }
@@ -287,7 +289,7 @@ las_error_t las_header_validate(const las_header_t *self)
 {
     LAS_DEBUG_ASSERT(self != NULL);
 
-    las_error_t err = {.kind =  LAS_ERROR_OK};
+    las_error_t err = {.kind = LAS_ERROR_OK};
 
 #ifdef LAS_DEBUG_ASSERTIONS
     if (self->number_of_vlrs != 0 && self->vlrs == NULL)
@@ -340,7 +342,8 @@ static void las_header_reset(las_header_t *header)
     memset(header, 0, sizeof(las_header_t));
 }
 
-las_error_t las_header_read_from(las_source_t *source, las_header_t *header)
+las_error_t
+las_header_read_from(las_source_t *source, las_header_t *header, bool *is_data_compressed)
 {
     uint64_t n = 0;
     las_error_t las_err = {LAS_ERROR_OK};
@@ -398,7 +401,8 @@ las_error_t las_header_read_from(las_source_t *source, las_header_t *header)
     uint16_t point_size;
     read_intog(&rdr, &point_format_id);
     read_intog(&rdr, &point_size);
-    las_err = las_point_format_from_id_and_size(&header->point_format, point_format_id, point_size);
+    las_err = las_point_format_from_id_and_size(
+        point_format_id, point_size, &header->point_format, is_data_compressed);
     if (las_error_is_failure(&las_err))
     {
         return las_err;
@@ -577,7 +581,7 @@ las_error_t las_header_write_to(const las_header_t *self, las_dest_t *dest)
     {
         const uint32_t val = (self->number_of_points_by_return[i] > (uint64_t)UINT32_MAX)
                                  ? UINT32_MAX
-                                 : (uint32_t) self->number_of_points_by_return[i];
+                                 : (uint32_t)self->number_of_points_by_return[i];
         write_intog(wtr, &val);
     }
 

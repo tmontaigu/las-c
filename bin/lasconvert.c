@@ -2,9 +2,9 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 const char *point_format_arg_str = "--point-format";
 const char *version_arg_str = "--version";
@@ -54,7 +54,8 @@ argument_t parse_arguments(const int argc, char *argv[])
             }
 
             args.target_format_id = (uint8_t)id;
-        } else if (strcmp(arg, version_arg_str) == 0)
+        }
+        else if (strcmp(arg, version_arg_str) == 0)
         {
             ++i;
             if (i >= argc)
@@ -133,7 +134,7 @@ int main(int argc, char *argv[])
 {
     argument_t args = parse_arguments(argc, argv);
 
-    las_error_t las_err = {LAS_ERROR_OK};
+    las_error_t las_err = {.kind = LAS_ERROR_OK};
 
     las_reader_t *reader = NULL;
     las_writer_t *writer = NULL;

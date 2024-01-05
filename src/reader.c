@@ -15,26 +15,32 @@ typedef struct las_reader
     /// The header of the LAS/LAZ data we are trying to read
     las_header_t header;
     /// Holds the raw bytes of a point.
-    /// Its size is point_size
+    /// Its size is point_size * points_in_buffer
     uint8_t *point_buffer;
+    uint64_t points_in_buffer;
     uint16_t point_size;
+
+    bool is_data_compressed;
 
 #ifdef WITH_LAZRS
     /// Is not null when the input data is LAZ
     /// meaning we should get bytes from the
     /// decompressor and not the source
-    Lazrs_SeqLasZipDecompressor *decompressor;
+    Lazrs_LasZipDecompressor *decompressor;
 #endif
 } las_reader_t;
 
-static inline las_error_t las_reader_fill_point_buffer_from_source(las_reader_t *self)
+static inline las_error_t las_reader_fill_point_buffer_from_source(las_reader_t *self,
+                                                                   const uint64_t num_points)
 {
     LAS_DEBUG_ASSERT(self != NULL);
+    LAS_DEBUG_ASSERT(num_points <= self->points_in_buffer);
 
     las_error_t las_err;
     las_err.kind = LAS_ERROR_OK;
 
-    const uint64_t n = las_source_read(&self->source, (uint64_t)self->point_size, self->point_buffer);
+    const uint64_t n =
+        las_source_read(&self->source, self->point_size * num_points, self->point_buffer);
     if (n < self->point_size)
     {
         if (las_source_eof(&self->source))
@@ -53,17 +59,18 @@ static inline las_error_t las_reader_fill_point_buffer_from_source(las_reader_t 
 
 #ifdef WITH_LAZRS
 /// Fills the reader's point buffer with the bytes of a decompressed point
-static inline las_error_t las_reader_fill_point_buffer_from_decompressor(las_reader_t *self)
+static inline las_error_t las_reader_fill_point_buffer_from_decompressor(las_reader_t *self,
+                                                                         uint64_t const num_points)
 {
     LAS_DEBUG_ASSERT(self != NULL);
     LAS_DEBUG_ASSERT(self->decompressor != NULL);
+    LAS_DEBUG_ASSERT(num_points <= self->points_in_buffer);
 
     las_error_t las_err;
     las_err.kind = LAS_ERROR_OK;
-    Lazrs_Result laz_err;
 
-    laz_err = lazrs_seq_laszip_decompressor_decompress_one(
-        self->decompressor, self->point_buffer, self->point_size);
+    const Lazrs_Result laz_err = lazrs_decompressor_decompress_many(
+        self->decompressor, self->point_buffer, self->point_size * num_points);
 
     if (laz_err != LAZRS_OK)
     {
@@ -82,7 +89,7 @@ static inline las_error_t las_reader_create_decompressor(las_reader_t *self)
     las_error_t las_err;
     las_err.kind = LAS_ERROR_OK;
     Lazrs_Result laz_err;
-    Lazrs_SeqLasZipDecompressor *decompressor;
+    Lazrs_LasZipDecompressor *decompressor;
 
     const las_vlr_t *laszip_vlr = las_header_find_laszip_vlr(&self->header);
     if (laszip_vlr == NULL)
@@ -106,7 +113,7 @@ static inline las_error_t las_reader_create_decompressor(las_reader_t *self)
     params.laszip_vlr.data = laszip_vlr->data;
     params.laszip_vlr.len = (uintptr_t)laszip_vlr->data_size;
 
-    laz_err = lazrs_seq_laszip_decompressor_new(params, &decompressor);
+    laz_err = lazrs_decompressor_new(params, true /* prefer_parallel */, &decompressor);
     if (laz_err != LAZRS_OK)
     {
         las_err.kind = LAS_ERROR_LAZRS;
@@ -166,7 +173,7 @@ static void las_reader_deinit(las_reader_t *self)
 #ifdef WITH_LAZRS
     if (self->decompressor != NULL)
     {
-        lazrs_seq_laszip_decompressor_delete(self->decompressor);
+        lazrs_decompressor_delete(self->decompressor);
         self->decompressor = NULL;
     }
 #endif
@@ -185,14 +192,14 @@ las_error_t las_reader_read_next_raw(las_reader_t *self, las_raw_point_t *point)
 #ifdef WITH_LAZRS
     if (self->decompressor)
     {
-        las_err = las_reader_fill_point_buffer_from_decompressor(self);
+        las_err = las_reader_fill_point_buffer_from_decompressor(self, 1 /* Only read one point */);
     }
     else
     {
-        las_err = las_reader_fill_point_buffer_from_source(self);
+        las_err = las_reader_fill_point_buffer_from_source(self, 1 /* Only read one point */);
     }
 #else
-    las_err = las_reader_fill_point_buffer_from_source(self);
+    las_err = las_reader_fill_point_buffer_from_source(self, 1 /* Only read one point */);
 #endif
 
     if (self->header.point_format.id <= 5)
@@ -204,6 +211,72 @@ las_error_t las_reader_read_next_raw(las_reader_t *self, las_raw_point_t *point)
     {
         las_raw_point_14_from_buffer(
             self->point_buffer, self->header.point_format, &point->point14);
+    }
+
+    return las_err;
+}
+
+las_error_t las_reader_read_many_next_raw(las_reader_t *self,
+                                          las_raw_point_t *points,
+                                          const uint64_t num_points)
+{
+    las_error_t las_err = {.kind = LAS_ERROR_OK};
+
+    // return las_err;
+    if (points == NULL || num_points == 0)
+    {
+        return las_err;
+    }
+
+    // Resize the buffer if needed
+    if (self->points_in_buffer < num_points)
+    {
+        uint8_t *new_buffer = realloc(self->point_buffer, self->point_size * num_points);
+        if (new_buffer == NULL)
+        {
+            las_err.kind = LAS_ERROR_MEMORY;
+            return las_err;
+        }
+        self->point_buffer = new_buffer;
+        self->points_in_buffer = num_points;
+    }
+
+#ifdef WITH_LAZRS
+    // We have to handle potential LAZ file
+    if (self->decompressor)
+    {
+        las_err = las_reader_fill_point_buffer_from_decompressor(self, num_points);
+    }
+    else
+    {
+        las_err = las_reader_fill_point_buffer_from_source(self, num_points);
+    }
+#else  // WITH_LAZRS
+    // Simply fill buffer
+    las_err = las_reader_fill_point_buffer_from_source(self, num_points);
+    if (las_error_is_failure(&las_err))
+    {
+        return las_err;
+    }
+#endif // WITH_LAZRS
+
+    // Parse points from buffer
+    const uint8_t *buffer = self->point_buffer;
+    if (self->header.point_format.id <= 5)
+    {
+        for (uint64_t i = 0; i < num_points; ++i)
+        {
+            las_raw_point_10_from_buffer(buffer, self->header.point_format, &points[i].point10);
+            buffer += self->point_size;
+        }
+    }
+    else
+    {
+        for (uint64_t i = 0; i < num_points; ++i)
+        {
+            las_raw_point_14_from_buffer(buffer, self->header.point_format, &points[i].point14);
+            buffer += self->point_size;
+        }
     }
 
     return las_err;
@@ -233,7 +306,7 @@ las_error_t las_reader_from_source(las_source_t source, las_reader_t **out_reade
 
     reader->source = source;
 
-    las_err = las_header_read_from(&reader->source, &reader->header);
+    las_err = las_header_read_from(&reader->source, &reader->header, &reader->is_data_compressed);
     if (las_error_is_failure(&las_err))
     {
         goto out;
@@ -245,7 +318,7 @@ las_error_t las_reader_from_source(las_source_t source, las_reader_t **out_reade
         goto out;
     }
 
-    const int is_compressed = reader->header.point_format.is_compressed;
+    const int is_compressed = reader->is_data_compressed;
     reader->point_size = las_point_format_point_size(reader->header.point_format);
 
     r = las_source_seek(
@@ -270,6 +343,7 @@ las_error_t las_reader_from_source(las_source_t source, las_reader_t **out_reade
         goto out;
     }
 
+    reader->points_in_buffer = 1;
     reader->point_buffer = malloc(sizeof(uint8_t) * reader->point_size);
     LAS_ASSERT(reader->point_buffer != NULL);
     memset(reader->point_buffer, 0, sizeof(uint8_t) * reader->point_size);
@@ -291,9 +365,10 @@ out:
     return las_err;
 }
 
-las_error_t las_reader_open_buffer(const uint8_t *buffer, const uint64_t size, las_reader_t **out_reader)
+las_error_t
+las_reader_open_buffer(const uint8_t *buffer, const uint64_t size, las_reader_t **out_reader)
 {
-    las_source_t source = las_source_new_memory(buffer, size);
+    const las_source_t source = las_source_new_memory(buffer, size);
     return las_reader_from_source(source, out_reader);
 }
 

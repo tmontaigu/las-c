@@ -36,7 +36,7 @@ void las_error_fprintf(const las_error_t *self, FILE *stream)
         break;
     case LAS_ERROR_INVALID_POINT_FORMAT:
         fprintf(stream,
-                "The point format `%"PRIu8"` is invalid or not supported\n",
+                "The point format `%" PRIu8 "` is invalid or not supported\n",
                 self->point_format_id);
         break;
     case LAS_ERROR_INVALID_POINT_SIZE:
@@ -56,16 +56,13 @@ void las_error_fprintf(const las_error_t *self, FILE *stream)
                 "point format `%d` is incompatible with version `%d.%d`\n",
                 (int)self->incompatible.point_format_id,
                 (int)self->incompatible.version.major,
-                (int)self->incompatible.version.minor
-                );
+                (int)self->incompatible.version.minor);
         break;
     case LAS_ERROR_INCOMPATIBLE_POINT_FORMAT:
         fprintf(stream, "The point format of does not match");
         break;
     case LAS_ERROR_POINT_COUNT_TOO_HIGH:
-        fprintf(stream,
-                "The point_count `%" PRIu64 "` exceeds the maximum",
-                self->point_count);
+        fprintf(stream, "The point_count `%" PRIu64 "` exceeds the maximum", self->point_count);
         break;
 
 #ifdef WITH_LAZRS
@@ -82,7 +79,7 @@ void las_error_fprintf(const las_error_t *self, FILE *stream)
 #endif
 
     default:
-        LAS_DEBUG_ASSERT_M(0, "Unhandled error kind");
+        LAS_DEBUG_ASSERT_M(0, "Unhandled error kind: %zu", (size_t)self->kind);
         break;
     }
 }

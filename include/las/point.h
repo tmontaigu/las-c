@@ -149,10 +149,26 @@ int las_raw_point_eq(const las_raw_point_t *lhs, const las_raw_point_t *rhs);
 /// Call `las_raw_point_deinit` once you are done with the point
 void las_raw_point_prepare(las_raw_point_t *point, las_point_format_t point_format);
 
+static inline void las_raw_point_prepare_many(las_raw_point_t *points, const uint64_t num_points, const las_point_format_t point_format)
+{
+    for (uint64_t i = 0; i < num_points; ++i)
+    {
+        las_raw_point_prepare(&points[i], point_format);
+    }
+}
+
 /// Cleans the point data members
 ///
 /// Does __not__ free the `point`, only frees what is 'inside'
 void las_raw_point_deinit(las_raw_point_t *point);
+
+static inline void las_raw_point_deinit_many(las_raw_point_t *points, const uint64_t num_points)
+{
+    for (uint64_t i = 0; i < num_points; ++i)
+    {
+        las_raw_point_deinit(&points[i]);
+    }
+}
 
 /// A more general point type
 ///
