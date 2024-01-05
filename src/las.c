@@ -36,8 +36,8 @@ void las_error_fprintf(const las_error_t *self, FILE *stream)
         break;
     case LAS_ERROR_INVALID_POINT_FORMAT:
         fprintf(stream,
-                "The point format `%I32u` is invalid or not supported\n",
-                (uint32_t)self->point_format_id);
+                "The point format `%"PRIu8"` is invalid or not supported\n",
+                self->point_format_id);
         break;
     case LAS_ERROR_INVALID_POINT_SIZE:
         fprintf(stream,
