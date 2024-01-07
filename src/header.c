@@ -176,12 +176,18 @@ int las_vlr_clone_into(const las_vlr_t *self, las_vlr_t *out_vlr)
 
     *out_vlr = *self;
 
-    out_vlr->data = malloc(out_vlr->data_size);
+    if (self->data_size == 0)
+    {
+        return 0;
+    }
+
+    out_vlr->data = malloc(out_vlr->data_size * sizeof(uint8_t));
     if (out_vlr->data == NULL)
     {
         out_vlr->data_size = 0;
         return 1;
     }
+    memcpy(out_vlr->data, self->data, out_vlr->data_size * sizeof(uint8_t));
 
     return 0;
 }
