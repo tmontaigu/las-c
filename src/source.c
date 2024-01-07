@@ -192,8 +192,7 @@ las_source_t las_source_new_memory(const uint8_t *buffer, uint64_t size)
     inner->size = size;
     inner->pos = 0;
 
-    las_source_t source;
-    memset(&source, 0, sizeof(las_source_t));
+    las_source_t source = {0};
     source.inner = (void *)inner;
     source.read_fn = las_memory_source_read;
     source.seek_fn = las_memory_source_seek;

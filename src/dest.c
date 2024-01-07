@@ -61,7 +61,7 @@ las_error_t las_file_dest_err_fn(las_file_dest_t *self)
     LAS_DEBUG_ASSERT_NOT_NULL(self->file);
 
     las_error_t las_err = {LAS_ERROR_OK};
-    int is_error = ferror(self->file);
+    const int is_error = ferror(self->file);
 
     if (is_error)
     {

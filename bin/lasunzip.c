@@ -6,16 +6,15 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        fprintf(stderr, "USAGE: %s INPUT_FILE [OUTPUT_FILE]", argv[0]);
+        fprintf(stderr, "USAGE: %s INPUT_FILE OUTPUT_FILE", argv[0]);
         return 1;
     }
 
     const char *filename = argv[1];
     const char *dest_filename = argv[2];
     const uint64_t chunk_size = 10000000; // TODO make this an argument
-    //const uint64_t chunk_size = 2; // TODO make this an argument
 
 
     if (strcmp(filename, dest_filename) == 0)
@@ -62,7 +61,6 @@ int main(int argc, char *argv[])
     while (points_left != 0)
     {
         const uint64_t num_points_to_read = (chunk_size > points_left) ? points_left : chunk_size;
-        // printf("Point left: %zu n: %zu\n", points_left, num_points_to_read);
         err = las_reader_read_many_next_raw(reader, raw_points, num_points_to_read);
         if (las_error_is_failure(&err))
         {
